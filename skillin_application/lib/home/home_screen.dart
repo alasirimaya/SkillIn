@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/services/auth_service.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -11,14 +12,14 @@ class HomeScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
-  await AuthService.logout();
+            await AuthService.logout();
 
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (_) => const AuthGate()),
-    (route) => false,
-  );
-},
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const AuthGate()),
+              (route) => false,
+            );
+          },
           child: const Text("Logout"),
         ),
       ),

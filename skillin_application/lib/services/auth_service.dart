@@ -1,49 +1,40 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'api_client.dart';
+import 'app_error.dart';
 
 class AuthService {
   static const String _baseUrl = "http://127.0.0.1:8000";
   static const String _tokenKey = "access_token";
 
-  // Secure storage: iOS Keychain / Android Keystore
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static final ApiClient _api = ApiClient(baseUrl: _baseUrl);
 
   static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse("$_baseUrl/api/v1/auth/login"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email.trim(),
-        "password": password,
-      }),
-    );
+    try {
+      final data = await _api.postJson<Map<String, dynamic>>(
+        "/api/v1/auth/login",
+        body: {
+          "email": email.trim(),
+          "password": password,
+        },
+        parser: (json) => (json as Map).cast<String, dynamic>(),
+      );
 
-    print("LOGIN STATUS: ${response.statusCode}");
-    print("LOGIN BODY: ${response.body}");
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
       final token = data["access_token"]?.toString();
-
       if (token == null || token.isEmpty) {
-        return {"ok": false, "msg": "No token returned"};
+        return {"ok": false, "msg": "No token returned from server."};
       }
 
       await _storage.write(key: _tokenKey, value: token);
       return {"ok": true, "token": token};
+    } catch (e) {
+      final msg = e is AppError ? e.message : "Login failed.";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
     }
-
-    String msg = "Login failed";
-    try {
-      final err = jsonDecode(response.body);
-      if (err is Map && err["detail"] != null) msg = err["detail"].toString();
-    } catch (_) {}
-
-    return {"ok": false, "msg": msg, "status": response.statusCode};
   }
 
   static Future<Map<String, dynamic>> register({
@@ -51,30 +42,48 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse("$_baseUrl/api/v1/auth/register"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "full_name": fullName.trim(),
-        "email": email.trim(),
-        "password": password,
-      }),
-    );
+    try {
+      await _api.postJson(
+        "/api/v1/auth/register",
+        body: {
+          "full_name": fullName.trim(),
+          "email": email.trim(),
+          "password": password,
+        },
+      );
 
-    print("REGISTER STATUS: ${response.statusCode}");
-    print("REGISTER BODY: ${response.body}");
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
       return {"ok": true};
+    } catch (e) {
+      final msg = e is AppError ? e.message : "Registration failed.";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getMe() async {
+    final token = await getToken();
+    if (token == null || token.isEmpty) {
+      return {"ok": false, "msg": "No token found. Please login first."};
     }
 
-    String msg = "Register failed";
     try {
-      final err = jsonDecode(response.body);
-      if (err is Map && err["detail"] != null) msg = err["detail"].toString();
-    } catch (_) {}
+      final data = await _api.getJson<Map<String, dynamic>>(
+        "/api/v1/auth/me",
+        token: token,
+        parser: (json) => (json as Map).cast<String, dynamic>(),
+      );
 
-    return {"ok": false, "msg": msg, "status": response.statusCode};
+      return {"ok": true, "data": data};
+    } catch (e) {
+      // If token invalid, logout
+      if (e is AppError && e.statusCode == 401) {
+        await logout();
+      }
+
+      final msg = e is AppError ? e.message : "Failed to fetch user data.";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
+    }
   }
 
   static Future<String?> getToken() async {

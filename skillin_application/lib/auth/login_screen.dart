@@ -3,6 +3,7 @@ import 'package:skillin_application/auth/register_screen.dart';
 import '../services/auth_service.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/auth/forgot_password_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,7 +14,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-bool _isLoading = false;
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +35,7 @@ bool _isLoading = false;
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /// EMAIL
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -34,6 +44,8 @@ bool _isLoading = false;
               ),
             ),
             const SizedBox(height: 16),
+
+            /// PASSWORD
             TextField(
               controller: _passwordController,
               obscureText: true,
@@ -58,6 +70,8 @@ bool _isLoading = false;
                           password: _passwordController.text,
                         );
 
+                        if (!mounted) return;
+
                         setState(() => _isLoading = false);
 
                         if (result["ok"] == true) {
@@ -68,10 +82,11 @@ bool _isLoading = false;
                             ),
                           );
                         } else {
+                          final msg =
+                              (result["msg"] ?? "Login failed.").toString();
+
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Login failed"),
-                            ),
+                            SnackBar(content: Text(msg)),
                           );
                         }
                       },

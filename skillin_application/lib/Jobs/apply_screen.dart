@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
+import 'package:file_picker/file_picker.dart';
 import 'job_model.dart';
 import 'success_screen.dart';
 
 class ApplyScreen extends StatefulWidget {
-  final Job job;
+  final JobModel job;
 
   const ApplyScreen({super.key, required this.job});
 
@@ -13,119 +13,102 @@ class ApplyScreen extends StatefulWidget {
 }
 
 class _ApplyScreenState extends State<ApplyScreen> {
-  String? selectedFile;
+  String? uploadedFileName;
   final TextEditingController infoController = TextEditingController();
 
-  void pickFile() {
-    final uploadInput = html.FileUploadInputElement();
-    uploadInput.accept = '.pdf,.doc,.docx';
-    uploadInput.click();
+  Future<void> pickCV() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx'],
+    );
 
-    uploadInput.onChange.listen((event) {
-      final file = uploadInput.files!.first;
+    if (result != null) {
       setState(() {
-        selectedFile = file.name;
+        uploadedFileName = result.files.single.name;
       });
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xfff5f5f5),
       appBar: AppBar(
-        elevation: 0,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        title: Text(widget.job.title),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  width: 55,
-                  height: 55,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.business, size: 30),
-                ),
-                const SizedBox(width: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.job.title,
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold)),
-                    Text(widget.job.company,
-                        style: const TextStyle(color: Colors.grey)),
-                    Text(widget.job.location,
-                        style: const TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ],
-            ),
+            // Job Title
+            Text(widget.job.title,
+                style: const TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold)),
+            Text("${widget.job.company} • ${widget.job.location}",
+                style: TextStyle(color: Colors.grey[600])),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
             // Upload CV Section
-            const Text(
-              "Upload CV",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              "Add your CV/Resume to apply for a job",
-              style: TextStyle(color: Colors.grey),
-            ),
+            const Text("Upload CV",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text("Add your CV/Resume to apply for a job",
+                style: TextStyle(color: Colors.grey)),
+
             const SizedBox(height: 15),
 
             GestureDetector(
-              onTap: pickFile,
+              onTap: pickCV,
               child: Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  color: Colors.grey.shade200,
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.upload_file, size: 28),
-                    const SizedBox(width: 10),
+                    const Icon(Icons.upload_file, color: Colors.blue, size: 30),
+                    const SizedBox(width: 12),
                     Text(
-                      selectedFile ?? "Upload CV/Resume",
-                      style: const TextStyle(fontSize: 16),
+                      uploadedFileName ?? "Upload CV/Resume",
+                      style: TextStyle(
+                        color: uploadedFileName == null
+                            ? Colors.grey
+                            : Colors.black,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
             // Information Section
-            const Text(
-              "Information",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
+            const Text("Information",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text("Explain why you are the right person for the job",
+                style: TextStyle(color: Colors.grey)),
+
+            const SizedBox(height: 15),
+
             TextField(
               controller: infoController,
               maxLines: 5,
               decoration: InputDecoration(
-                hintText: "Explain why you are the right person for this job",
+                hintText: "Write here...",
                 filled: true,
-                fillColor: Colors.grey.shade200,
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none),
               ),
             ),
 
@@ -135,38 +118,39 @@ class _ApplyScreenState extends State<ApplyScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: selectedFile == null
-                    ? null
-                    : () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SuccessScreen(
-                              job: widget.job,
-                              fileName: selectedFile!,
-                            ),
-                          ),
-                        );
-                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Colors.blueAccent,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SuccessScreen(
+                        job: widget.job,
+                        fileName: uploadedFileName ?? "CV.pdf",
+                      ),
+                    ),
+                  );
+                },
                 child: const Text(
                   "APPLY NOW",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 }
+
+
 
 
 

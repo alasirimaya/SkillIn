@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/services/auth_service.dart';
 import 'package:skillin_application/profile/profile_screen.dart';
+import 'package:skillin_application/Jobs/jobs_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,19 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
+                    builder: (_) => const JobsListScreen(),
+                  ),
+                );
+              },
+              child: const Text("Go to Jobs"),
+            ),
+            const SizedBox(height: 12),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
                     builder: (_) => const ProfileScreen(),
                   ),
                 );
@@ -26,6 +40,7 @@ class HomeScreen extends StatelessWidget {
               child: const Text("Go to Profile"),
             ),
             const SizedBox(height: 12),
+
             ElevatedButton(
               onPressed: () async {
                 await AuthService.logout();

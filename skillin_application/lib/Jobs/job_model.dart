@@ -1,22 +1,27 @@
-class Job {
+class JobModel {
   final String title;
   final String company;
   final String location;
-  final String jobType;
+  final String category;
+  final String type;
+  final String position;
   final String salary;
-  final String description;
-  final List<String> skills;
+  final String timeAgo;
+  final String logo;
 
-  Job({
+  JobModel({
     required this.title,
     required this.company,
     required this.location,
-    required this.jobType,
+    required this.category,
+    required this.type,
+    required this.position,
     required this.salary,
-    required this.description,
-    required this.skills,
+    required this.timeAgo,
+    required this.logo,
   });
 }
+
 
 
 

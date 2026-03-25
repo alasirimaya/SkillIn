@@ -1,32 +1,27 @@
 import 'job_model.dart';
 
-List<Job> dummyJobs = [
-  Job(
+List<JobModel> dummyJobs = [
+  JobModel(
     title: "IT Coordinator",
     company: "Google Inc.",
     location: "Riyadh, KSA",
-    jobType: "Full time",
+    category: "IT",
+    type: "Full time",
+    position: "Senior IT Engineer",
     salary: "\$15K/Mo",
-    description: "Senior IT Engineer",
-    skills: ["Networking", "Security", "Cloud"],
+    timeAgo: "25 minutes ago",
+    logo: "assets/google.png",
   ),
-  Job(
+  JobModel(
     title: "Lead Designer",
     company: "Dribbble Inc.",
     location: "Dammam, KSA",
-    jobType: "Full time",
+    category: "Design",
+    type: "Full time",
+    position: "Senior Designer",
     salary: "\$20K/Mo",
-    description: "Senior Designer",
-    skills: ["UI/UX", "Figma", "Branding"],
-  ),
-  Job(
-    title: "IT Manager",
-    company: "Google Inc.",
-    location: "Riyadh, KSA",
-    jobType: "Full time",
-    salary: "\$15K/Mo",
-    description: "IT Manager Role",
-    skills: ["Leadership", "Cloud", "Security"],
+    timeAgo: "25 minutes ago",
+    logo: "assets/dribbble.png",
   ),
 ];
 

@@ -3,37 +3,28 @@ import 'job_model.dart';
 import 'apply_screen.dart';
 
 class JobDetailsScreen extends StatelessWidget {
-  final Job job;
+  final JobModel job;
 
   const JobDetailsScreen({super.key, required this.job});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xfff5f5f5),
       appBar: AppBar(
-        elevation: 0,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        title: Text(job.title),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // Logo + Title + Location
             Row(
               children: [
-                Container(
-                  width: 55,
-                  height: 55,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.business, size: 30),
-                ),
+                Image.asset(job.logo, height: 50),
                 const SizedBox(width: 15),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,58 +32,39 @@ class JobDetailsScreen extends StatelessWidget {
                     Text(job.title,
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold)),
-                    Text(job.company,
-                        style: const TextStyle(color: Colors.grey)),
-                    Text(job.location,
-                        style: const TextStyle(color: Colors.grey)),
+                    Text("${job.company} • ${job.location}",
+                        style: TextStyle(color: Colors.grey[600])),
                   ],
                 ),
               ],
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
             // Job Description
-            const Text(
-              "Job Description",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
+            const Text("Job Description",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             Text(
-              job.description,
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
+              "The IT Manager is responsible for overseeing the company's information "
+              "technology operations, ensuring the reliability, security, and efficiency "
+              "of all IT systems. This role involves managing IT staff, setting strategic "
+              "technology goals, implementing new systems, and ensuring alignment with "
+              "business objectives.",
+              style: TextStyle(color: Colors.grey[700], height: 1.4),
             ),
 
             const SizedBox(height: 25),
 
-            // Required Skills
-            const Text(
-              "Required Skills",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
+            // Requirements
+            const Text("Requirements",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
 
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: job.skills
-                  .map(
-                    (skill) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle,
-                              color: Colors.green, size: 22),
-                          const SizedBox(width: 10),
-                          Text(
-                            skill,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
+            requirement("- Bachelor's degree in IT or related field."),
+            requirement("- Minimum 5 years of experience in IT operations."),
+            requirement("- At least 2 years in a managerial role."),
+            requirement("- Strong knowledge of cloud services and networking."),
 
             const SizedBox(height: 40),
 
@@ -100,6 +72,12 @@ class JobDetailsScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -108,25 +86,28 @@ class JobDetailsScreen extends StatelessWidget {
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
                 child: const Text(
                   "APPLY NOW",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
+
+  Widget requirement(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(text, style: TextStyle(color: Colors.grey[700], height: 1.4)),
+    );
+  }
 }
+
 
 
 

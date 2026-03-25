@@ -1,78 +1,68 @@
 import 'package:flutter/material.dart';
 import 'job_model.dart';
-import 'job_details_screen.dart';
 
 class JobCard extends StatelessWidget {
-  final Job job;
+  final JobModel job;
+  final VoidCallback onTap;
 
-  const JobCard({super.key, required this.job});
+  const JobCard({super.key, required this.job, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => JobDetailsScreen(job: job),
-          ),
-        );
-      },
+      onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 18),
-        padding: const EdgeInsets.all(18),
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            )
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Job Title + Company
-            Text(
-              job.title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              job.company,
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Location + Type
             Row(
               children: [
-                const Icon(Icons.location_on, size: 18),
-                const SizedBox(width: 4),
-                Text(job.location),
-                const SizedBox(width: 15),
-                const Icon(Icons.work, size: 18),
-                const SizedBox(width: 4),
-                Text(job.jobType),
+                Image.asset(job.logo, height: 40),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(job.title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text("${job.company} • ${job.location}",
+                        style: TextStyle(color: Colors.grey[600])),
+                  ],
+                ),
               ],
             ),
-
-            const SizedBox(height: 10),
-
-            // Salary
-            Text(
-              job.salary,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(job.category,
+                    style: TextStyle(color: Colors.grey[700])),
+                Text(job.type, style: TextStyle(color: Colors.grey[700])),
+                Text(job.position, style: TextStyle(color: Colors.grey[700])),
+              ],
             ),
-
-            const SizedBox(height: 5),
-
-            // Posted time
-            const Text(
-              "25 minutes ago",
-              style: TextStyle(color: Colors.grey),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(job.salary,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(job.timeAgo, style: TextStyle(color: Colors.grey[600])),
+              ],
             ),
           ],
         ),
@@ -80,6 +70,7 @@ class JobCard extends StatelessWidget {
     );
   }
 }
+
 
 
 

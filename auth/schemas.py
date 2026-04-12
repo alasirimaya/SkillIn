@@ -17,3 +17,7 @@ class MeResponse(BaseModel):
     id: int
     full_name: str
     email: EmailStr
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+

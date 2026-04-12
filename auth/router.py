@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from auth.schemas import RegisterRequest, LoginRequest, TokenResponse, MeResponse
+from auth.schemas import RegisterRequest, LoginRequest, TokenResponse, MeResponse, ForgotPasswordRequest
 from auth.security import hash_password, verify_password, create_access_token, decode_token
 
 from database import get_db
@@ -65,3 +65,14 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
 @router.get("/me", response_model=MeResponse)
 def me(current_user: User = Depends(get_current_user)):
     return MeResponse(id=current_user.id, full_name=current_user.full_name, email=current_user.email)
+<<<<<<< Updated upstream
+=======
+
+@router.post("/forgot-password")
+def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+
+    return {
+        "message": "If this email exists, a reset link has been sent."
+    }
+>>>>>>> Stashed changes

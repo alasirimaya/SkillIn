@@ -17,7 +17,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // زر الذهاب للملف الشخصي
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -27,10 +26,7 @@ class HomeScreen extends StatelessWidget {
               },
               child: const Text("Go to Profile"),
             ),
-
             const SizedBox(height: 20),
-
-            // زر تسجيل الخروج
             ElevatedButton(
               onPressed: () {
                 Navigator.pushReplacement(
@@ -40,30 +36,32 @@ class HomeScreen extends StatelessWidget {
               },
               child: const Text("Logout"),
             ),
-
             const SizedBox(height: 20),
-
-            // زر اختبار صفحة تفاصيل الوظيفة
             ElevatedButton(
               onPressed: () {
-                Job testJob = Job(
+                JobModel testJob = JobModel(
+                  id: 1,
                   title: "Test Job",
                   company: "Test Company",
                   location: "Riyadh",
-                  jobType: "Full Time",
+                  category: "IT",
+                  type: "Full Time",
+                  position: "Software Engineer",
                   salary: "10,000 SAR",
+                  timeAgo: "1 day ago",
+                  logo: "assets/google.png",
                   description: "This is a test job description.",
-                  skills: ["Skill 1", "Skill 2"],
+                  skills: "Skill 1, Skill 2",
                 );
 
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => JobDetailsScreen(job: testJob),
+                    builder: (_) => JobDetailsScreen(jobId: testJob.id),
                   ),
                 );
               },
-              child: const Text(" Job Details"),
+              child: const Text("Job Details"),
             ),
           ],
         ),
@@ -71,5 +69,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-

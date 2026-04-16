@@ -219,6 +219,7 @@ import 'job_card.dart';
 import 'job_details_screen.dart';
 import 'job_model.dart';
 import '../services/jobs_service.dart';
+import '../services/auth_service.dart';
 
 class JobsListScreen extends StatefulWidget {
   const JobsListScreen({super.key});
@@ -262,51 +263,76 @@ class _JobsListScreenState extends State<JobsListScreen> {
       errorMessage = null;
     });
 
-   final response = await JobsService.getRecommendations(9);
+    try {
+     final meResult = await AuthService.getMe().timeout(
+  const Duration(seconds: 8),
+);
 
-    if (response["ok"] == true) {
-      final Map<String, dynamic> data =
-          Map<String, dynamic>.from(response["data"] as Map);
-      final List recommendations = data["recommendations"] ?? [];
+      if (meResult["ok"] != true) {
+        setState(() {
+          isLoading = false;
+          errorMessage =
+              meResult["msg"]?.toString() ?? "Failed to load current user.";
+        });
+        return;
+      }
 
-      final List<JobModel> loadedJobs = recommendations.map((rec) {
-        final map = Map<String, dynamic>.from(rec as Map);
+      final Map<String, dynamic> meData =
+          Map<String, dynamic>.from(meResult["data"] as Map);
 
-        return JobModel(
-          id: map["job_id"] ?? 0,
-          title: (map["title"] ?? "").toString(),
-          company: (map["company"] ?? "").toString(),
-          location: "Riyadh, KSA",
-          category: "IT",
-          type: "Full Time",
-          position: "",
-          salary: "",
-          timeAgo: "1 day ago",
-          logo: "",
-          description: "",
-          skills: "",
-        );
-      }).toList();
+      final int userId = meData["id"];
 
-      final List<double> loadedSimilarities = recommendations.map((rec) {
-        final map = Map<String, dynamic>.from(rec as Map);
-        return ((map["similarity"] ?? 0) as num).toDouble();
-      }).toList();
+      final response = await JobsService.getRecommendations(userId);
 
+      if (response["ok"] == true) {
+        final Map<String, dynamic> data =
+            Map<String, dynamic>.from(response["data"] as Map);
+        final List recommendations = data["recommendations"] ?? [];
+
+        final List<JobModel> loadedJobs =
+            recommendations.map<JobModel>((rec) {
+          final map = Map<String, dynamic>.from(rec as Map);
+
+          return JobModel(
+            id: map["job_id"] ?? 0,
+            title: (map["title"] ?? "").toString(),
+            company: (map["company"] ?? "").toString(),
+            location: "Riyadh, KSA",
+            category: "General",
+            type: "Full Time",
+            position: "",
+            salary: "",
+            timeAgo: "1 day ago",
+            logo: "",
+            description: "",
+            skills: "",
+          );
+        }).toList();
+
+        final List<double> loadedSimilarities =
+            recommendations.map<double>((rec) {
+          final map = Map<String, dynamic>.from(rec as Map);
+          return ((map["similarity"] ?? 0) as num).toDouble();
+        }).toList();
+
+        setState(() {
+          allJobs = loadedJobs;
+          filteredJobs = List.from(loadedJobs);
+          allSimilarities = loadedSimilarities;
+          filteredSimilarities = List.from(loadedSimilarities);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage =
+              response["msg"]?.toString() ?? "Failed to load recommendations";
+        });
+      }
+    } catch (e) {
       setState(() {
-        allJobs = loadedJobs;
-        filteredJobs = List.from(loadedJobs);
-
-        allSimilarities = loadedSimilarities;
-        filteredSimilarities = List.from(loadedSimilarities);
-
         isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-        errorMessage =
-            response["msg"]?.toString() ?? "Failed to load recommendations";
+       errorMessage = "Something went wrong: $e";
       });
     }
   }
@@ -524,11 +550,9 @@ class _JobsListScreenState extends State<JobsListScreen> {
     );
   }
 
-  Color _matchColor(double similarity) {
-    if (similarity >= 0.75) return Colors.green;
-    if (similarity >= 0.50) return Colors.orange;
-    return Colors.red;
-  }
+ Color _matchColor(double similarity) {
+  return const Color(0xFF0F1F57);
+}
 
   IconData _matchIcon(double similarity) {
     if (similarity >= 0.75) return Icons.star;

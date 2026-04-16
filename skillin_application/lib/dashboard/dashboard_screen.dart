@@ -28,25 +28,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadUser() async {
-    final me = await AuthService.getMe();
-    final savedCity = await ProfileLocalService.getCity();
-    final savedCountry = await ProfileLocalService.getCountry();
+  final me = await AuthService.getMe();
 
-    if (me["ok"] == true) {
-      final data = me["data"];
+  if (me["ok"] == true) {
+    final Map<String, dynamic> data =
+        Map<String, dynamic>.from(me["data"] as Map);
 
-      if (mounted) {
-        setState(() {
-          userName = (data["full_name"] ?? "").toString().isEmpty
-              ? "User"
-              : data["full_name"];
-          userEmail = data["email"] ?? "";
-          city = savedCity;
-          country = savedCountry;
-        });
-      }
+    final int userId = data["id"];
+
+    final savedCity = await ProfileLocalService.getCity(userId);
+    final savedCountry = await ProfileLocalService.getCountry(userId);
+
+    if (mounted) {
+      setState(() {
+        userName = (data["full_name"] ?? "").toString().isEmpty
+            ? "User"
+            : data["full_name"];
+        userEmail = (data["email"] ?? "").toString();
+        city = savedCity;
+        country = savedCountry;
+      });
     }
   }
+}
 
   Future<void> _openEditProfile() async {
     await Navigator.push(

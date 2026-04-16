@@ -8,129 +8,146 @@ class ProfileLocalService {
   static const String _skillsKey = 'profile_skills';
   static const String _languagesKey = 'profile_languages';
   static const String _resumeNameKey = 'profile_resume_name';
+  static const String _cityKey = 'profile_city';
+  static const String _countryKey = 'profile_country';
 
-// إضافتي
-static const String _cityKey = 'profile_city';
+  static String _key(String baseKey, int userId) => '${baseKey}_$userId';
 
-// إضافتي
-static const String _countryKey = 'profile_country';
-
-  static Future<void> saveAbout(String value) async {
+  static Future<String> _getStringWithMigration(
+    String baseKey,
+    int userId,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_aboutKey, value);
+    final userKey = _key(baseKey, userId);
+
+    final userValue = prefs.getString(userKey);
+    if (userValue != null) return userValue;
+
+    final oldValue = prefs.getString(baseKey);
+    if (oldValue != null) {
+      await prefs.setString(userKey, oldValue);
+      return oldValue;
+    }
+
+    return '';
   }
 
-  static Future<String> getAbout() async {
+  static Future<List<String>> _getListWithMigration(
+    String baseKey,
+    int userId,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_aboutKey) ?? '';
+    final userKey = _key(baseKey, userId);
+
+    final userValue = prefs.getString(userKey);
+    if (userValue != null && userValue.isNotEmpty) {
+      return List<String>.from(jsonDecode(userValue));
+    }
+
+    final oldValue = prefs.getString(baseKey);
+    if (oldValue != null && oldValue.isNotEmpty) {
+      await prefs.setString(userKey, oldValue);
+      return List<String>.from(jsonDecode(oldValue));
+    }
+
+    return [];
   }
 
-  static Future<void> saveExperience(String value) async {
+  static Future<void> saveAbout(int userId, String value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_experienceKey, value);
+    await prefs.setString(_key(_aboutKey, userId), value);
   }
 
-  static Future<String> getExperience() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_experienceKey) ?? '';
+  static Future<String> getAbout(int userId) async {
+    return _getStringWithMigration(_aboutKey, userId);
   }
 
-  static Future<void> saveEducation(String value) async {
+  static Future<void> saveExperience(int userId, String value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_educationKey, value);
+    await prefs.setString(_key(_experienceKey, userId), value);
   }
 
-  static Future<String> getEducation() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_educationKey) ?? '';
+  static Future<String> getExperience(int userId) async {
+    return _getStringWithMigration(_experienceKey, userId);
   }
 
-  static Future<void> saveSkills(List<String> skills) async {
+  static Future<void> saveEducation(int userId, String value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_skillsKey, jsonEncode(skills));
+    await prefs.setString(_key(_educationKey, userId), value);
   }
 
-  static Future<List<String>> getSkills() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_skillsKey);
-    if (raw == null || raw.isEmpty) return [];
-    final decoded = jsonDecode(raw);
-    return List<String>.from(decoded);
+  static Future<String> getEducation(int userId) async {
+    return _getStringWithMigration(_educationKey, userId);
   }
 
-  static Future<void> saveLanguages(List<String> languages) async {
+  static Future<void> saveSkills(int userId, List<String> skills) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_languagesKey, jsonEncode(languages));
+    await prefs.setString(_key(_skillsKey, userId), jsonEncode(skills));
   }
 
-  static Future<List<String>> getLanguages() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_languagesKey);
-    if (raw == null || raw.isEmpty) return [];
-    final decoded = jsonDecode(raw);
-    return List<String>.from(decoded);
+  static Future<List<String>> getSkills(int userId) async {
+    return _getListWithMigration(_skillsKey, userId);
   }
 
-  static Future<void> saveResumeName(String value) async {
+  static Future<void> saveLanguages(int userId, List<String> languages) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_resumeNameKey, value);
+    await prefs.setString(_key(_languagesKey, userId), jsonEncode(languages));
   }
 
-  static Future<String> getResumeName() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_resumeNameKey) ?? '';
+  static Future<List<String>> getLanguages(int userId) async {
+    return _getListWithMigration(_languagesKey, userId);
   }
-  // إضافتي
-static Future<void> saveCity(String value) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_cityKey, value);
-}
 
-// إضافتي
-static Future<String> getCity() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(_cityKey) ?? '';
-}
+  static Future<void> saveResumeName(int userId, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key(_resumeNameKey, userId), value);
+  }
 
-// إضافتي
-static Future<void> saveCountry(String value) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_countryKey, value);
-}
+  static Future<String> getResumeName(int userId) async {
+    return _getStringWithMigration(_resumeNameKey, userId);
+  }
 
-// إضافتي
-static Future<String> getCountry() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(_countryKey) ?? '';
-}
+  static Future<void> saveCity(int userId, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key(_cityKey, userId), value);
+  }
+
+  static Future<String> getCity(int userId) async {
+    return _getStringWithMigration(_cityKey, userId);
+  }
+
+  static Future<void> saveCountry(int userId, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key(_countryKey, userId), value);
+  }
+
+  static Future<String> getCountry(int userId) async {
+    return _getStringWithMigration(_countryKey, userId);
+  }
 
   static Future<void> saveAll({
+    required int userId,
     required String about,
     required String experience,
     required String education,
     required List<String> skills,
     required List<String> languages,
     required String resumeName,
-    // إضافتي
-  String? city,
-
-  // إضافتي
-  String? country,
+    String? city,
+    String? country,
   }) async {
-    await saveAbout(about);
-    await saveExperience(experience);
-    await saveEducation(education);
-    await saveSkills(skills);
-    await saveLanguages(languages);
-    await saveResumeName(resumeName);
-    // إضافتي
-  if (city != null) {
-    await saveCity(city);
-  }
+    await saveAbout(userId, about);
+    await saveExperience(userId, experience);
+    await saveEducation(userId, education);
+    await saveSkills(userId, skills);
+    await saveLanguages(userId, languages);
+    await saveResumeName(userId, resumeName);
 
-  // إضافتي
-  if (country != null) {
-    await saveCountry(country);
+    if (city != null) {
+      await saveCity(userId, city);
+    }
+    if (country != null) {
+      await saveCountry(userId, country);
+    }
   }
 }
-  }

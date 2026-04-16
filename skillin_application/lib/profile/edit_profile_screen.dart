@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/profile_local_service.dart';
+import '../services/auth_service.dart';
+import '../services/api_client.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -17,6 +19,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   bool _loading = true;
   bool _saving = false;
+  int? _userId;
 
   final TextEditingController _aboutController = TextEditingController();
   final TextEditingController _experienceController = TextEditingController();
@@ -24,12 +27,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _skillsController = TextEditingController();
   final TextEditingController _languagesController = TextEditingController();
   final TextEditingController _resumeController = TextEditingController();
-
-// إضافتي
-final TextEditingController _cityController = TextEditingController();
-
-// إضافتي
-final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
 
   @override
   void initState() {
@@ -38,18 +37,29 @@ final TextEditingController _countryController = TextEditingController();
   }
 
   Future<void> _loadSavedData() async {
-    final about = await ProfileLocalService.getAbout();
-    final experience = await ProfileLocalService.getExperience();
-    final education = await ProfileLocalService.getEducation();
-    final skills = await ProfileLocalService.getSkills();
-    final languages = await ProfileLocalService.getLanguages();
-    final resume = await ProfileLocalService.getResumeName();
+    final meResult = await AuthService.getMe();
 
-    // إضافتي
-final city = await ProfileLocalService.getCity();
+    if (meResult["ok"] != true) {
+      setState(() {
+        _loading = false;
+      });
+      return;
+    }
 
-// إضافتي
-final country = await ProfileLocalService.getCountry();
+    final Map<String, dynamic> meData =
+        Map<String, dynamic>.from(meResult["data"] as Map);
+
+    final int userId = meData["id"];
+    _userId = userId;
+
+    final about = await ProfileLocalService.getAbout(userId);
+    final experience = await ProfileLocalService.getExperience(userId);
+    final education = await ProfileLocalService.getEducation(userId);
+    final skills = await ProfileLocalService.getSkills(userId);
+    final languages = await ProfileLocalService.getLanguages(userId);
+    final resume = await ProfileLocalService.getResumeName(userId);
+    final city = await ProfileLocalService.getCity(userId);
+    final country = await ProfileLocalService.getCountry(userId);
 
     _aboutController.text = about;
     _experienceController.text = experience;
@@ -57,12 +67,8 @@ final country = await ProfileLocalService.getCountry();
     _skillsController.text = skills.join(', ');
     _languagesController.text = languages.join(', ');
     _resumeController.text = resume;
-
-// إضافتي
-_cityController.text = city;
-
-// إضافتي
-_countryController.text = country;
+    _cityController.text = city;
+    _countryController.text = country;
 
     setState(() {
       _loading = false;
@@ -78,32 +84,110 @@ _countryController.text = country;
   }
 
   Future<void> _saveProfile() async {
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Could not find current user."),
+        ),
+      );
+      return;
+    }
+
+    print("SAVE PROFILE START");
+
     setState(() => _saving = true);
 
-    await ProfileLocalService.saveAll(
-      about: _aboutController.text.trim(),
-      experience: _experienceController.text.trim(),
-      education: _educationController.text.trim(),
-      skills: _splitList(_skillsController.text),
-      languages: _splitList(_languagesController.text),
-      resumeName: _resumeController.text.trim(),
-      
-    );
-// إضافتي
-await ProfileLocalService.saveCity(_cityController.text.trim());
+    try {
+      await ProfileLocalService.saveAll(
+        userId: _userId!,
+        about: _aboutController.text.trim(),
+        experience: _experienceController.text.trim(),
+        education: _educationController.text.trim(),
+        skills: _splitList(_skillsController.text),
+        languages: _splitList(_languagesController.text),
+        resumeName: _resumeController.text.trim(),
+        city: _cityController.text.trim(),
+        country: _countryController.text.trim(),
+      );
 
-// إضافتي
-await ProfileLocalService.saveCountry(_countryController.text.trim());
-    if (!mounted) return;
-    setState(() => _saving = false);
+      print("LOCAL SAVE DONE");
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Profile information saved successfully."),
+      final token = await AuthService.getToken();
+      print("TOKEN: $token");
+
+      final skillsList = _splitList(_skillsController.text);
+      print("SKILLS TO SEND: $skillsList");
+
+      await ApiClient(baseUrl: "http://127.0.0.1:8000").postJson(
+        "/api/v1/profile/skills",
+        token: token,
+        body: {
+          "skills": skillsList,
+        },
+      );
+
+      print("SKILLS SENT SUCCESSFULLY");
+
+      await AuthService.refreshUserEmbedding(_userId!);
+      print("EMBEDDING REFRESHED");
+
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Profile information saved successfully."),
+        ),
+      );
+final hasSkills = _splitList(_skillsController.text).isNotEmpty;
+
+final isIncomplete =
+    _aboutController.text.trim().isEmpty ||
+    _experienceController.text.trim().isEmpty ||
+    _educationController.text.trim().isEmpty ||
+    _splitList(_languagesController.text).isEmpty ||
+    _resumeController.text.trim().isEmpty ||
+    _cityController.text.trim().isEmpty ||
+    _countryController.text.trim().isEmpty;
+
+if (hasSkills && isIncomplete) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        "For a better experience, please complete your full profile ",
       ),
-    );
+    ),
+  );
+} else if (!hasSkills) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        "Add your skills to start getting recommendations",
+      ),
+    ),
+  );
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        "Profile saved successfully !",
+      ),
+    ),
+  );
+}
+      Navigator.pop(context);
+    } catch (e) {
+      print("ERROR IN SAVE PROFILE: $e");
 
-    Navigator.pop(context);
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error saving profile: $e"),
+        ),
+      );
+    }
   }
 
   @override
@@ -114,11 +198,8 @@ await ProfileLocalService.saveCountry(_countryController.text.trim());
     _skillsController.dispose();
     _languagesController.dispose();
     _resumeController.dispose();
-    // إضافتي
-_cityController.dispose();
-
-// إضافتي
-_countryController.dispose();
+    _cityController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
@@ -279,7 +360,6 @@ _countryController.dispose();
           child: Column(
             children: [
               _buildHeader(),
-
               _buildSectionCard(
                 icon: Icons.person_outline,
                 title: "About me",
@@ -289,7 +369,6 @@ _countryController.dispose();
                   maxLines: 4,
                 ),
               ),
-
               _buildSectionCard(
                 icon: Icons.work_outline,
                 title: "Work experience",
@@ -299,7 +378,6 @@ _countryController.dispose();
                   maxLines: 3,
                 ),
               ),
-
               _buildSectionCard(
                 icon: Icons.school_outlined,
                 title: "Education",
@@ -309,7 +387,6 @@ _countryController.dispose();
                   maxLines: 3,
                 ),
               ),
-
               _buildSectionCard(
                 icon: Icons.hub_outlined,
                 title: "Skill",
@@ -331,7 +408,6 @@ _countryController.dispose();
                   ],
                 ),
               ),
-
               _buildSectionCard(
                 icon: Icons.workspace_premium_outlined,
                 title: "Language",
@@ -353,7 +429,6 @@ _countryController.dispose();
                   ],
                 ),
               ),
-
               _buildSectionCard(
                 icon: Icons.description_outlined,
                 title: "Resume",
@@ -362,31 +437,22 @@ _countryController.dispose();
                   hint: "Enter your resume file name",
                 ),
               ),
-
-// إضافتي
-_buildSectionCard(
-  icon: Icons.location_city_outlined,
-  title: "City",
-  child: _buildTextField(
-    controller: _cityController,
-    hint: "Enter your city",
-  ),
-),
-
-// إضافتي
-_buildSectionCard(
-  icon: Icons.public_outlined,
-  title: "Country",
-  child: _buildTextField(
-    controller: _countryController,
-    hint: "Enter your country",
-  ),
-),
-
-
-
-
-
+              _buildSectionCard(
+                icon: Icons.location_city_outlined,
+                title: "City",
+                child: _buildTextField(
+                  controller: _cityController,
+                  hint: "Enter your city",
+                ),
+              ),
+              _buildSectionCard(
+                icon: Icons.public_outlined,
+                title: "Country",
+                child: _buildTextField(
+                  controller: _countryController,
+                  hint: "Enter your country",
+                ),
+              ),
             ],
           ),
         ),

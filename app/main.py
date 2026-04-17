@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
-from applications import router as applications_router
+from app.api.v1.applications import router as applications_router
 app = FastAPI(title="SkillIn API")
 
 app.add_middleware(

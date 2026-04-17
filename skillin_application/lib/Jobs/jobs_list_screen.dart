@@ -213,13 +213,13 @@ class _JobsListScreenState extends State<JobsListScreen> {
     );
   }
 }
-*/
-import 'package:flutter/material.dart';
+*/import 'package:flutter/material.dart';
 import 'filter_screen.dart';
 import 'job_card.dart';
 import 'job_details_screen.dart';
 import 'job_model.dart';
 import '../services/jobs_service.dart';
+import '../services/auth_service.dart';
 
 class JobsListScreen extends StatefulWidget {
   const JobsListScreen({super.key});
@@ -231,6 +231,9 @@ class JobsListScreen extends StatefulWidget {
 class _JobsListScreenState extends State<JobsListScreen> {
   List<JobModel> allJobs = [];
   List<JobModel> filteredJobs = [];
+  List<double> allSimilarities = [];
+  List<double> filteredSimilarities = [];
+
   bool isLoading = true;
   String? errorMessage;
 
@@ -260,22 +263,76 @@ class _JobsListScreenState extends State<JobsListScreen> {
       errorMessage = null;
     });
 
-    final response = await JobsService.getJobs();
+    try {
+     final meResult = await AuthService.getMe().timeout(
+  const Duration(seconds: 8),
+);
 
-    if (response["ok"] == true) {
-      final List data = response["data"] as List;
+      if (meResult["ok"] != true) {
+        setState(() {
+          isLoading = false;
+          errorMessage =
+              meResult["msg"]?.toString() ?? "Failed to load current user.";
+        });
+        return;
+      }
 
+      final Map<String, dynamic> meData =
+          Map<String, dynamic>.from(meResult["data"] as Map);
+
+      final int userId = meData["id"];
+
+      final response = await JobsService.getRecommendations(userId);
+
+      if (response["ok"] == true) {
+        final Map<String, dynamic> data =
+            Map<String, dynamic>.from(response["data"] as Map);
+        final List recommendations = data["recommendations"] ?? [];
+
+        final List<JobModel> loadedJobs =
+            recommendations.map<JobModel>((rec) {
+          final map = Map<String, dynamic>.from(rec as Map);
+
+          return JobModel(
+            id: map["job_id"] ?? 0,
+            title: (map["title"] ?? "").toString(),
+            company: (map["company"] ?? "").toString(),
+            location: "Riyadh, KSA",
+            category: "General",
+            type: "Full Time",
+            position: "",
+            salary: "",
+            timeAgo: "1 day ago",
+            logo: "",
+            description: "",
+            skills: "",
+          );
+        }).toList();
+
+        final List<double> loadedSimilarities =
+            recommendations.map<double>((rec) {
+          final map = Map<String, dynamic>.from(rec as Map);
+          return ((map["similarity"] ?? 0) as num).toDouble();
+        }).toList();
+
+        setState(() {
+          allJobs = loadedJobs;
+          filteredJobs = List.from(loadedJobs);
+          allSimilarities = loadedSimilarities;
+          filteredSimilarities = List.from(loadedSimilarities);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage =
+              response["msg"]?.toString() ?? "Failed to load recommendations";
+        });
+      }
+    } catch (e) {
       setState(() {
-        allJobs = data
-            .map((job) => JobModel.fromJson(Map<String, dynamic>.from(job)))
-            .toList();
-        filteredJobs = List.from(allJobs);
         isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-        errorMessage = response["msg"]?.toString() ?? "Failed to load jobs";
+       errorMessage = "Something went wrong: $e";
       });
     }
   }
@@ -283,14 +340,26 @@ class _JobsListScreenState extends State<JobsListScreen> {
   void applyFilters() {
     final query = searchController.text.trim().toLowerCase();
 
-    setState(() {
-      filteredJobs = allJobs.where((job) {
-        final matchesQuery =
-            job.title.toLowerCase().contains(query) ||
-            job.company.toLowerCase().contains(query);
+    final List<JobModel> newFilteredJobs = [];
+    final List<double> newFilteredSimilarities = [];
 
-        return matchesQuery;
-      }).toList();
+    for (int i = 0; i < allJobs.length; i++) {
+      final job = allJobs[i];
+      final similarity = allSimilarities[i];
+
+      final matchesQuery =
+          job.title.toLowerCase().contains(query) ||
+          job.company.toLowerCase().contains(query);
+
+      if (matchesQuery) {
+        newFilteredJobs.add(job);
+        newFilteredSimilarities.add(similarity);
+      }
+    }
+
+    setState(() {
+      filteredJobs = newFilteredJobs;
+      filteredSimilarities = newFilteredSimilarities;
     });
   }
 
@@ -311,21 +380,6 @@ class _JobsListScreenState extends State<JobsListScreen> {
         locationController.text = result["location"] ?? locationController.text;
       });
     }
-  }
-
-  String _jobTypePlaceholder(int index) {
-    const types = ["Full-time", "Part time", "Remote"];
-    return types[index % types.length];
-  }
-
-  String _locationPlaceholder(int index) {
-    const locations = ["Riyadh, KSA", "Jeddah, KSA", "Dammam, KSA"];
-    return locations[index % locations.length];
-  }
-
-  String _timeAgoPlaceholder(int index) {
-    const times = ["25 minute ago", "1 day ago", "2 days ago"];
-    return times[index % times.length];
   }
 
   Widget _searchHeader() {
@@ -356,7 +410,7 @@ class _JobsListScreenState extends State<JobsListScreen> {
                   child: TextField(
                     controller: searchController,
                     decoration: const InputDecoration(
-                      hintText: "Design",
+                      hintText: "Search recommended jobs...",
                       hintStyle: TextStyle(color: Color(0xFFB5B8C7)),
                       border: InputBorder.none,
                     ),
@@ -435,18 +489,16 @@ class _JobsListScreenState extends State<JobsListScreen> {
                 width: 24,
                 height: 24,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.tune,
-                  color: Colors.white,
-                ),
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.tune, color: Colors.white),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
-        _chip("IT Supervisor"),
+        _chip("Recommended"),
         const SizedBox(width: 10),
-        _chip("Designer"),
+        _chip("Top Match"),
         const SizedBox(width: 10),
         _chip(selectedJobType),
       ],
@@ -472,7 +524,7 @@ class _JobsListScreenState extends State<JobsListScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              "No results found",
+              "No recommendations found",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -483,7 +535,7 @@ class _JobsListScreenState extends State<JobsListScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                "The search could not be found, please check spelling or write another word.",
+                "We could not find matching jobs right now. Try again later or adjust your search.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF6A6F85),
@@ -496,6 +548,16 @@ class _JobsListScreenState extends State<JobsListScreen> {
         ),
       ),
     );
+  }
+
+ Color _matchColor(double similarity) {
+  return const Color(0xFF0F1F57);
+}
+
+  IconData _matchIcon(double similarity) {
+    if (similarity >= 0.75) return Icons.star;
+    if (similarity >= 0.50) return Icons.thumb_up;
+    return Icons.info_outline;
   }
 
   @override
@@ -535,20 +597,78 @@ class _JobsListScreenState extends State<JobsListScreen> {
                                 itemCount: filteredJobs.length,
                                 itemBuilder: (context, index) {
                                   final job = filteredJobs[index];
+                                  final similarity = filteredSimilarities[index];
+                                  final matchPercent =
+                                      (similarity * 100).toStringAsFixed(0);
+                                  final matchColor = _matchColor(similarity);
 
-                                  return JobCard(
-  job: job,
-  location: "Riyadh, KSA",
-  jobType: "Full Time",
-  timeAgo: "1 day ago",
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JobDetailsScreen(jobId: job.id),
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      JobCard(
+                                        job: job,
+                                        location: "Riyadh, KSA",
+                                        jobType: "Full Time",
+                                        timeAgo: "1 day ago",
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => JobDetailsScreen(
+                                                jobId: job.id,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          0,
+                                          12,
+                                          14,
                                         ),
-                                      );
-                                    },
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  _matchIcon(similarity),
+                                                  size: 18,
+                                                  color: matchColor,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  "Match: $matchPercent%",
+                                                  style: TextStyle(
+                                                    color: matchColor,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: LinearProgressIndicator(
+                                                value: similarity,
+                                                minHeight: 8,
+                                                backgroundColor:
+                                                    Colors.grey.shade300,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<Color>(
+                                                  matchColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   );
                                 },
                               ),

@@ -2,13 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from auth.schemas import RegisterRequest, LoginRequest, TokenResponse, MeResponse
-from auth.security import hash_password, verify_password, create_access_token, decode_token
+from auth.schemas import (
+    RegisterRequest,
+    LoginRequest,
+    TokenResponse,
+    MeResponse,
+    ForgotPasswordRequest,
+)
+from auth.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    decode_token,
+)
 
 from database import get_db
 from models import User
-
-# NEW: استدعاء خدمة التخزين
 from app.api.v1.embedding_service import save_user_embedding
 
 router = APIRouter(tags=["Auth"])
@@ -30,7 +39,6 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    # NEW: تخزين embedding للمستخدم الجديد
     save_user_embedding(db, user)
 
     return MeResponse(id=user.id, full_name=user.full_name, email=user.email)
@@ -49,7 +57,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     return TokenResponse(access_token=token)
 
 
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
+def get_current_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+) -> User:
     try:
         payload = decode_token(token)
         user_id = int(payload.get("sub"))
@@ -64,4 +75,17 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
 
 @router.get("/me", response_model=MeResponse)
 def me(current_user: User = Depends(get_current_user)):
-    return MeResponse(id=current_user.id, full_name=current_user.full_name, email=current_user.email)
+    return MeResponse(
+        id=current_user.id,
+        full_name=current_user.full_name,
+        email=current_user.email,
+    )
+
+
+@router.post("/forgot-password")
+def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    db.query(User).filter(User.email == payload.email).first()
+
+    return {
+        "message": "If this email exists, a reset link has been sent."
+    }

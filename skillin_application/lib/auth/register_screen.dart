@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/auth/login_screen.dart';
 import 'package:skillin_application/services/auth_service.dart';
+import 'package:skillin_application/services/user_role_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -136,50 +137,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> _handleRegister() async {
-    print("REGISTER PRESSED");
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+ Future<void> _handleRegister() async {
+  print("REGISTER PRESSED");
+  final name = _nameController.text.trim();
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields.")),
-      );
-      return;
-    }
-
-    if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password must be at least 8 characters.")),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    final result = await AuthService.register(
-      fullName: name,
-      email: email,
-      password: password,
+  if (selectedRole == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please choose your role.")),
     );
-    print("REGISTER RESULT: $result");
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (result["ok"] == true) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AuthGate()),
-      );
-    } else {
-      final msg = (result["msg"] ?? "Registration failed.").toString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-    }
+    return;
   }
+
+  if (name.isEmpty || email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please fill all fields.")),
+    );
+    return;
+  }
+
+  if (password.length < 8) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Password must be at least 8 characters.")),
+    );
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  final result = await AuthService.register(
+    fullName: name,
+    email: email,
+    password: password,
+  );
+
+  print("REGISTER RESULT: $result");
+
+  if (!mounted) return;
+  setState(() => _isLoading = false);
+
+  if (result["ok"] == true) {
+    await UserRoleService.saveRoleForEmail(email, selectedRole!);
+    await UserRoleService.setCurrentRole(selectedRole!);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthGate()),
+    );
+  } else {
+    final msg = (result["msg"] ?? "Registration failed.").toString();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {

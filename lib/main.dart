@@ -1,28 +1,28 @@
-import 'package:flutter/material.dart';
-import 'auth/auth_gate.dart';
-import 'home/home_screen.dart';
+// import 'package:flutter/material.dart';
+// import 'auth/auth_gate.dart';
+// import 'home/home_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+// void main() {
+//   runApp(const MyApp());
+// }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
 
-      initialRoute: "/",
+//       initialRoute: "/",
 
-      routes: {
-        "/": (context) => const AuthGate(),
-        "/home": (context) => const HomeScreen(),
-      },
-    );
-  }
-}
+//       routes: {
+//         "/": (context) => const AuthGate(),
+//         "/home": (context) => const HomeScreen(),
+//       },
+//     );
+//   }
+// }
 
 
 

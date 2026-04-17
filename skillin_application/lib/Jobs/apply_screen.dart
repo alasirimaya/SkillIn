@@ -343,12 +343,15 @@ class _ApplyScreenState extends State<ApplyScreen> {
 
   void submitApplication() {
     ApplicationService.addLocalApplication(
-      ApplicationModel(
-        jobTitle: widget.job.title,
+      
+    ApplicationModel(
+      jobTitle: widget.job.title,
         company: widget.job.company,
-        status: "Under Review",
-      ),
-    );
+      status: "Under Review",
+     ),
+       
+);
+    
 
     Navigator.push(
       context,

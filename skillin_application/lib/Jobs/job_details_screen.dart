@@ -117,6 +117,7 @@ import 'package:skillin_application/profile/saved_jobs_provider.dart';
 import 'apply_screen.dart';
 import 'job_model.dart';
 import '../services/jobs_service.dart';
+import 'skill_gap_screen.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final int jobId;
@@ -438,7 +439,38 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 60,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF0F1F57),
+                              elevation: 0,
+                              side: const BorderSide(
+                                color: Color(0xFF0F1F57),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SkillGapScreen(
+                                    job: job,
+                                    matchPercent: 54,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text("View Skill Gap"),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: SizedBox(
                           height: 60,

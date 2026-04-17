@@ -30,12 +30,12 @@ class AuthService {
 
       await _storage.write(key: _tokenKey, value: token);
       return {"ok": true, "token": token};
-   } catch (e) {
-  print("LOGIN ERROR: $e");
-  final msg = e is AppError ? e.message : "Login failed: $e";
-  final status = e is AppError ? e.statusCode : null;
-  return {"ok": false, "msg": msg, "status": status};
-}
+    } catch (e) {
+      print("LOGIN ERROR: $e");
+      final msg = e is AppError ? e.message : "Login failed: $e";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
+    }
   }
 
   static Future<Map<String, dynamic>> register({
@@ -54,37 +54,37 @@ class AuthService {
       );
 
       return {"ok": true};
-   } catch (e) {
-  print("REGISTER ERROR: $e");
-  final msg = e is AppError ? e.message : "Registration failed: $e";
-  final status = e is AppError ? e.statusCode : null;
-  return {"ok": false, "msg": msg, "status": status};
-}
+    } catch (e) {
+      print("REGISTER ERROR: $e");
+      final msg = e is AppError ? e.message : "Registration failed: $e";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
+    }
   }
 
-static Future<Map<String, dynamic>> forgotPassword({
-  required String email,
-}) async {
-  try {
-    final data = await _api.postJson<Map<String, dynamic>>(
-      "/api/v1/auth/forgot-password",
-      body: {
-        "email": email.trim(),
-      },
-      parser: (json) => (json as Map).cast<String, dynamic>(),
-    );
+  static Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final data = await _api.postJson<Map<String, dynamic>>(
+        "/api/v1/auth/forgot-password",
+        body: {
+          "email": email.trim(),
+        },
+        parser: (json) => (json as Map).cast<String, dynamic>(),
+      );
 
-    return {
-      "ok": true,
-      "msg": data["message"] ?? "If this email exists, a reset link has been sent."
-    };
-  } catch (e) {
-  print("FORGOT PASSWORD ERROR: $e");
-  final msg = e is AppError ? e.message : "Forgot password request failed: $e";
-  final status = e is AppError ? e.statusCode : null;
-  return {"ok": false, "msg": msg, "status": status};
-}
-}
+      return {
+        "ok": true,
+        "msg": data["message"] ?? "If this email exists, a reset link has been sent."
+      };
+    } catch (e) {
+      print("FORGOT PASSWORD ERROR: $e");
+      final msg = e is AppError ? e.message : "Forgot password request failed: $e";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
+    }
+  }
 
   static Future<Map<String, dynamic>> getMe() async {
     final token = await getToken();
@@ -101,12 +101,27 @@ static Future<Map<String, dynamic>> forgotPassword({
 
       return {"ok": true, "data": data};
     } catch (e) {
-      // If token invalid, logout
       if (e is AppError && e.statusCode == 401) {
         await logout();
       }
 
       final msg = e is AppError ? e.message : "Failed to fetch user data.";
+      final status = e is AppError ? e.statusCode : null;
+      return {"ok": false, "msg": msg, "status": status};
+    }
+  }
+
+  static Future<Map<String, dynamic>> refreshUserEmbedding(int userId) async {
+    try {
+      final data = await _api.postJson<Map<String, dynamic>>(
+        "/api/v1/recommend/refresh-user-embedding/$userId",
+        body: {},
+        parser: (json) => (json as Map).cast<String, dynamic>(),
+      );
+
+      return {"ok": true, "data": data};
+    } catch (e) {
+      final msg = e is AppError ? e.message : "Failed to refresh embedding.";
       final status = e is AppError ? e.statusCode : null;
       return {"ok": false, "msg": msg, "status": status};
     }
@@ -124,4 +139,35 @@ static Future<Map<String, dynamic>> forgotPassword({
   static Future<void> logout() async {
     await _storage.delete(key: _tokenKey);
   }
+  static Future<List<dynamic>> getCandidates() async {
+
+  final token = await getToken();
+
+  if (token == null || token.isEmpty) {
+    return [];
+  }
+
+  try {
+
+    final data = await _api.getJson<List<dynamic>>(
+
+      "/api/v1/users/personal",
+
+      token: token,
+
+      parser: (json) => (json as List).cast<dynamic>(),
+
+    );
+
+    return data;
+
+  } catch (e) {
+
+    print("GET CANDIDATES ERROR: $e");
+
+    return [];
+
+  }
+
+}
 }

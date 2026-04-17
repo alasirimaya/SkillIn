@@ -12,6 +12,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = true;
+  int? userId;
 
   String name = "";
   String email = "";
@@ -43,27 +44,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final me = await AuthService.getMe();
+  final me = await AuthService.getMe();
 
-    if (me["ok"] == true) {
-      final data = me["data"];
-      name = data["full_name"] ?? "";
-      email = data["email"] ?? "";
-    }
+  if (me["ok"] == true) {
+    final Map<String, dynamic> data =
+        Map<String, dynamic>.from(me["data"] as Map);
 
-    about = await ProfileLocalService.getAbout();
-    experience = await ProfileLocalService.getExperience();
-    education = await ProfileLocalService.getEducation();
-    skills = await ProfileLocalService.getSkills();
-    languages = await ProfileLocalService.getLanguages();
-    resume = await ProfileLocalService.getResumeName();
+    userId = data["id"];
+    name = data["full_name"] ?? "";
+    email = data["email"] ?? "";
 
-    if (mounted) {
-      setState(() {
-        _loading = false;
-      });
-    }
+    about = await ProfileLocalService.getAbout(userId!);
+    experience = await ProfileLocalService.getExperience(userId!);
+    education = await ProfileLocalService.getEducation(userId!);
+    skills = await ProfileLocalService.getSkills(userId!);
+    languages = await ProfileLocalService.getLanguages(userId!);
+    resume = await ProfileLocalService.getResumeName(userId!);
   }
+
+  if (mounted) {
+    setState(() {
+      _loading = false;
+    });
+  }
+}
 
   Future<void> _openEditProfile() async {
     await Navigator.push(

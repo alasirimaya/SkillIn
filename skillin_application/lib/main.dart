@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:skillin_application/auth/auth_gate.dart';
-
-import 'auth/auth_gate.dart';
+import 'auth/register_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AuthGate(),
+      home: RegisterScreen(),
     );
   }
 }

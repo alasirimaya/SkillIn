@@ -14,12 +14,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _loading = false;
   String? _message;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+  }
+
   Future<void> _submit() async {
     final email = _emailController.text.trim();
+
+    FocusScope.of(context).unfocus();
 
     if (email.isEmpty) {
       setState(() {
         _message = "Please enter your email.";
+      });
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      setState(() {
+        _message = "Please enter a valid email.";
       });
       return;
     }
@@ -31,11 +50,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     final result = await AuthService.forgotPassword(email: email);
 
+    if (!mounted) return;
+
     setState(() {
       _loading = false;
       _message = result["ok"] == true
           ? "A password reset email has been sent to your email."
-          : (result["msg"] ?? "Forgot password request failed.");
+          : (result["msg"] ?? "Forgot password request failed.").toString();
     });
   }
 
@@ -45,7 +66,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       floatingLabelBehavior: FloatingLabelBehavior.always,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(35),
         borderSide: const BorderSide(
@@ -60,6 +81,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           width: 2,
         ),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(35),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.6,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(35),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 2,
+        ),
+      ),
       labelStyle: const TextStyle(
         color: Color(0xFF0F1F57),
         fontSize: 14,
@@ -68,65 +103,160 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
+  Widget _buildPrimaryButton({
+    required String text,
+    required VoidCallback? onTap,
+    required bool isLoading,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: onTap == null ? 0.7 : 1,
+        child: Container(
+          height: 58,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0xFF3B55C1),
+                Color(0xFF031760),
+              ],
+              stops: [0.02, 1.0],
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromARGB(35, 3, 23, 96),
+                blurRadius: 10,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBackground(double height) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            Color(0xFF4A63D8),
+            Color(0xFF36353C),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -80,
+            left: -130,
+            child: Container(
+              width: 340,
+              height: 340,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            top: -110,
+            right: -30,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -120,
+            left: 20,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -120,
+            right: -30,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.04),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    final topSectionHeight = size.height * 0.29;
+    final formTopOverlap = 175.0;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
-
-      body: SafeArea(
-        child: Center(
-          child: SizedBox(
-            width: 430,
-            height: 874,
-
-            child: Stack(
+      resizeToAvoidBottomInset: true,
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildTopBackground(topSectionHeight),
+          ),
+          SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.only(bottom: keyboardHeight),
+            child: Column(
               children: [
+                SizedBox(height: MediaQuery.of(context).padding.top + 20),
 
-                /// Background
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/background.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-
-                /// Back arrow
-                Positioned(
-                  top: 20,
-                  left: 15,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-
-                /// Bottom container
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 182,
-                  bottom: 0,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF8F8F8),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(85),
-                        topRight: Radius.circular(85),
-                      ),
-                    ),
-                  ),
-                ),
-
-                /// SkillIn logo
-                Positioned(
-                  top: 42,
-                  left: 0,
-                  right: 0,
+                Transform.translate(
+                  offset: const Offset(0, -20),
                   child: Center(
                     child: SizedBox(
-                      width: 165,
+                      width: size.width * 0.34,
                       child: Image.asset(
                         'assets/images/SkillIn_Logo.png',
                         fit: BoxFit.contain,
@@ -135,112 +265,113 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
 
-                /// Title
-                const Positioned(
-                  top: 255,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Text(
-                      "Forgot your password ?",
-                      style: TextStyle(
-                        fontSize: 29.88,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF04103D),
+                SizedBox(height: topSectionHeight - 130),
+
+                Transform.translate(
+                  offset: Offset(0, -formTopOverlap),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8F8F8),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(70),
+                        topRight: Radius.circular(70),
                       ),
                     ),
-                  ),
-                ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 8),
 
-                /// Instruction text
-                Positioned(
-                  top: 310,
-                  left: 60,
-                  right: 60,
-                  child: Text(
-                    "Enter your email and wait to receive a link",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF06061C).withOpacity(0.39),
-                    ),
-                  ),
-                ),
-
-                /// Email field
-                Positioned(
-                  top: 380,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: SizedBox(
-                      width: 340,
-                      height: 62,
-                      child: TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: _fieldDecoration("Email"),
-                      ),
-                    ),
-                  ),
-                ),
-
-                /// Next button image
-                Positioned(
-                  top: 470,
-                  left: 72,
-                  child: GestureDetector(
-                    onTap: _loading ? null : _submit,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: SizedBox(
-                        width: 285,
-                        height: 52,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/next_button.png',
-                              fit: BoxFit.cover,
-                            ),
-
-                            if (_loading)
-                              const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: Colors.white,
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_back,
+                                  color: Color(0xFF04103D),
                                 ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
                               ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          const Center(
+                            child: Text(
+                              "Forgot your password ?",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF04103D),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          Text(
+                            "Enter your email and wait to receive a link",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF06061C).withOpacity(0.39),
+                            ),
+                          ),
+
+                          const SizedBox(height: 36),
+
+                          TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) {
+                              if (!_loading) _submit();
+                            },
+                            decoration: _fieldDecoration("Email"),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          _buildPrimaryButton(
+                            text: "Next",
+                            isLoading: _loading,
+                            onTap: _loading ? null : _submit,
+                          ),
+
+                          if (_message != null) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              _message!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: _message!
+                                        .toLowerCase()
+                                        .contains("sent")
+                                    ? const Color(0xFF1F7A3D)
+                                    : Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
-                        ),
+
+                          const SizedBox(height: 36),
+                        ],
                       ),
                     ),
                   ),
                 ),
-
-                /// Message
-                if (_message != null)
-                  Positioned(
-                    top: 540,
-                    left: 40,
-                    right: 40,
-                    child: Text(
-                      _message!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.red,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:skillin_application/auth/register_screen.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/auth/forgot_password_screen.dart';
-import 'package:skillin_application/services/user_role_service.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -31,63 +30,59 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    print("LOGIN PRESSED");
+  print("LOGIN PRESSED");
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+  final email = _emailController.text.trim();
+  final password = _passwordController.text;
 
-    FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
 
-    if (email.isEmpty || password.isEmpty) {
-      setState(() {
-        _errorMessage = "Please fill in all fields.";
-      });
-      return;
-    }
-
-    if (!_isValidEmail(email)) {
-      setState(() {
-        _errorMessage = "Please enter a valid email.";
-      });
-      return;
-    }
-
+  if (email.isEmpty || password.isEmpty) {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _errorMessage = "Please fill in all fields.";
     });
-
-    final result = await AuthService.login(
-      email: email,
-      password: password,
-    );
-
-    print("LOGIN RESULT: $result");
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (result["ok"] == true) {
-      final role = await UserRoleService.getRoleForEmail(email);
-      await UserRoleService.setCurrentRole(role);
-
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const AuthGate(),
-        ),
-      );
-    } else {
-      setState(() {
-        _errorMessage = (result["msg"] ?? "Login failed.").toString();
-      });
-    }
+    return;
   }
+
+  if (!_isValidEmail(email)) {
+    setState(() {
+      _errorMessage = "Please enter a valid email.";
+    });
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+    _errorMessage = null;
+  });
+
+  final result = await AuthService.login(
+    email: email,
+    password: password,
+  );
+
+  print("LOGIN RESULT: $result");
+
+  if (!mounted) return;
+
+  setState(() {
+    _isLoading = false;
+  });
+
+  if (result["ok"] == true) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AuthGate(),
+      ),
+    );
+  } else {
+    setState(() {
+      _errorMessage = (result["msg"] ?? "Login failed.").toString();
+    });
+  }
+}
+  
 
   InputDecoration _fieldDecoration(String label) {
     return InputDecoration(
@@ -149,7 +144,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                Positioned(
+
+Positioned(
                   left: 0,
                   right: 0,
                   top: 182,
@@ -164,6 +160,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
+                // logo moved higher
                 Positioned(
                   top: 42,
                   left: 0,
@@ -178,6 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
                 const Positioned(
                   top: 255,
                   left: 0,
@@ -193,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
                 Positioned(
                   top: 365,
                   left: 0,
@@ -209,6 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
                 Positioned(
                   top: 450,
                   left: 0,
@@ -225,6 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
                 Positioned(
                   top: 532,
                   right: 45,
@@ -247,7 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                Positioned(
+
+Positioned(
                   top: 610,
                   left: 72,
                   child: GestureDetector(
@@ -281,6 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
                 if (_errorMessage != null)
                   Positioned(
                     top: 676,
@@ -296,6 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+
                 Positioned(
                   top: 760,
                   left: 0,

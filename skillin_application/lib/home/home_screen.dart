@@ -3,7 +3,6 @@ import 'package:skillin_application/Jobs/job_details_screen.dart';
 import 'package:skillin_application/Jobs/job_model.dart';
 import 'package:skillin_application/Jobs/jobs_list_screen.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
-import 'package:skillin_application/profile/profile_screen.dart';
 import 'package:skillin_application/services/auth_service.dart';
 import 'package:skillin_application/services/jobs_service.dart';
 
@@ -362,30 +361,6 @@ class _HomeScreenState extends State<HomeScreen> {
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B1F3B),
               height: 1.2,
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
-          },
-          child: CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.white,
-            child: ClipOval(
-              child: Image.asset(
-                "assets/images/personal_button.png",
-                width: 48,
-                height: 48,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.person,
-                  color: Color(0xFF2A2F6D),
-                ),
-              ),
             ),
           ),
         ),

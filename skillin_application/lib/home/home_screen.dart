@@ -427,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const JobsListScreen(
-                            useRecommendations: false,
+                            useRecommendations: true,
                             initialJobType: "Remote",
                           ),
                         ),
@@ -444,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const JobsListScreen(
-                                  useRecommendations: false,
+                                  useRecommendations: true,
                                   initialJobType: "Full Time",
                                 ),
                               ),
@@ -487,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const JobsListScreen(
-                                  useRecommendations: false,
+                                  useRecommendations: true,
                                   initialJobType: "Part Time",
                                 ),
                               ),
@@ -536,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const JobsListScreen(
-                        useRecommendations: false,
+                        useRecommendations: true,
                         initialJobType: "All Jobs",
                       ),
                     ),

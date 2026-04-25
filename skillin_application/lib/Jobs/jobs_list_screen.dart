@@ -300,28 +300,29 @@ class _JobsListScreenState extends State<JobsListScreen> {
 
           final List<JobModel> loadedJobs = recommendations.map<JobModel>((rec) {
             final map = Map<String, dynamic>.from(rec as Map);
+            final similarity = ((map["similarity"] ?? 0) as num).toDouble();
 
             return JobModel(
-              id: map["job_id"] ?? 0,
+              id: map["job_id"] ?? map["id"] ?? 0,
               title: (map["title"] ?? "").toString(),
               company: (map["company"] ?? "").toString(),
               location: (map["location"] ?? "Riyadh, KSA").toString(),
-              category: (map["workplace"] ?? "General").toString(),
-              type: (map["employment_type"] ?? "Full Time").toString(),
+              category: (map["workplace"] ?? map["category"] ?? "General")
+                  .toString(),
+              type: (map["employment_type"] ?? map["type"] ?? "Full Time")
+                  .toString(),
               position: "",
               salary: "",
               timeAgo: "1 day ago",
               logo: "",
-              description: "",
-              skills: "",
+              description: (map["description"] ?? "").toString(),
+              skills: (map["skills"] ?? "").toString(),
+              similarity: similarity,
             );
           }).toList();
 
           final List<double> loadedSimilarities =
-              recommendations.map<double>((rec) {
-            final map = Map<String, dynamic>.from(rec as Map);
-            return ((map["similarity"] ?? 0) as num).toDouble();
-          }).toList();
+              loadedJobs.map((job) => job.similarity).toList();
 
           setState(() {
             allJobs = loadedJobs;
@@ -349,7 +350,7 @@ class _JobsListScreenState extends State<JobsListScreen> {
 
           setState(() {
             allJobs = loadedJobs;
-            allSimilarities = List.generate(loadedJobs.length, (_) => 0);
+            allSimilarities = loadedJobs.map((job) => job.similarity).toList();
             isLoading = false;
           });
 
@@ -377,17 +378,9 @@ class _JobsListScreenState extends State<JobsListScreen> {
     final workplace = job.category.toLowerCase().trim();
     final selected = selectedJobType.toLowerCase().replaceAll("-", " ").trim();
 
-    if (selected == "full time") {
-      return type == "full time";
-    }
-
-    if (selected == "part time") {
-      return type == "part time";
-    }
-
-    if (selected == "remote") {
-      return workplace == "remote" || type == "remote";
-    }
+    if (selected == "full time") return type == "full time";
+    if (selected == "part time") return type == "part time";
+    if (selected == "remote") return workplace == "remote" || type == "remote";
 
     return true;
   }
@@ -420,10 +413,7 @@ class _JobsListScreenState extends State<JobsListScreen> {
           job.company.toLowerCase().contains(query) ||
           job.skills.toLowerCase().contains(query);
 
-      final matchesType = _matchesJobType(job);
-      final matchesLocation = _matchesLocation(job);
-
-      if (matchesQuery && matchesType && matchesLocation) {
+      if (matchesQuery && _matchesJobType(job) && _matchesLocation(job)) {
         newFilteredJobs.add(job);
         newFilteredSimilarities.add(similarity);
       }
@@ -587,47 +577,15 @@ class _JobsListScreenState extends State<JobsListScreen> {
   Widget _emptyState() {
     return Expanded(
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              "assets/images/noResult.png",
-              width: 170,
-              height: 170,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.search_off,
-                size: 90,
-                color: Color(0xFFB0B3C7),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              widget.useRecommendations
-                  ? "No recommendations found"
-                  : "No jobs found",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1B1F3B),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                widget.useRecommendations
-                    ? "We could not find matching jobs right now. Try again later or adjust your search."
-                    : "No matching jobs were found. Try changing your search or filters.",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF6A6F85),
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ],
+        child: Text(
+          widget.useRecommendations
+              ? "No recommendations found"
+              : "No jobs found",
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B1F3B),
+          ),
         ),
       ),
     );
@@ -680,12 +638,16 @@ class _JobsListScreenState extends State<JobsListScreen> {
                                 itemCount: filteredJobs.length,
                                 itemBuilder: (context, index) {
                                   final job = filteredJobs[index];
-                                  final similarity = filteredSimilarities[index];
+                                  final similarity =
+                                      index < filteredSimilarities.length
+                                          ? filteredSimilarities[index]
+                                          : 0.0;
+
+                                  final safeSimilarity =
+                                      similarity.clamp(0.0, 1.0);
+
                                   final matchPercent =
-                                      (similarity * 100).toStringAsFixed(0);
-                                  final showMatch =
-                                      widget.useRecommendations &&
-                                      filteredSimilarities.isNotEmpty;
+                                      (safeSimilarity * 100).toStringAsFixed(0);
 
                                   return Column(
                                     crossAxisAlignment:
@@ -713,53 +675,54 @@ class _JobsListScreenState extends State<JobsListScreen> {
                                           );
                                         },
                                       ),
-                                      if (showMatch)
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                            12,
-                                            0,
-                                            12,
-                                            14,
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    _matchIcon(similarity),
-                                                    size: 18,
-                                                    color: _matchColor(similarity),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    "Match: $matchPercent%",
-                                                    style: TextStyle(
-                                                      color: _matchColor(similarity),
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 6),
-                                              ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                child: LinearProgressIndicator(
-                                                  value: similarity,
-                                                  minHeight: 8,
-                                                  backgroundColor:
-                                                      Colors.grey.shade300,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<Color>(
-                                                    _matchColor(similarity),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          0,
+                                          12,
+                                          14,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  _matchIcon(safeSimilarity),
+                                                  size: 18,
+                                                  color:
+                                                      _matchColor(safeSimilarity),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  "Match: $matchPercent%",
+                                                  style: TextStyle(
+                                                    color: _matchColor(
+                                                        safeSimilarity),
+                                                    fontWeight: FontWeight.w700,
                                                   ),
                                                 ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: LinearProgressIndicator(
+                                                value: safeSimilarity,
+                                                minHeight: 8,
+                                                backgroundColor:
+                                                    Colors.grey.shade300,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<Color>(
+                                                  _matchColor(safeSimilarity),
+                                                ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
+                                      ),
                                     ],
                                   );
                                 },

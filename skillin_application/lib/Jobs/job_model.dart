@@ -11,6 +11,7 @@ class JobModel {
   final String logo;
   final String description;
   final String skills;
+  final double similarity;
 
   JobModel({
     required this.id,
@@ -25,6 +26,7 @@ class JobModel {
     required this.logo,
     required this.description,
     required this.skills,
+    required this.similarity,
   });
 
   factory JobModel.fromJson(Map<String, dynamic> json) {
@@ -45,7 +47,7 @@ class JobModel {
     final extractedWorkplace = extractFromDescription('Workplace');
 
     return JobModel(
-      id: json['id'] ?? 0,
+      id: json['job_id'] ?? json['id'] ?? 0,
       title: (json['title'] ?? '').toString(),
       company: (json['company'] ?? '').toString(),
       location: (json['location'] ?? extractedLocation).toString(),
@@ -55,10 +57,11 @@ class JobModel {
           .toString(),
       position: (json['position'] ?? '').toString(),
       salary: (json['salary'] ?? '').toString(),
-      timeAgo: (json['timeAgo'] ?? json['time_ago'] ?? '').toString(),
+      timeAgo: (json['timeAgo'] ?? json['time_ago'] ?? '1 day ago').toString(),
       logo: (json['logo'] ?? '').toString(),
       description: descriptionText,
       skills: (json['skills'] ?? '').toString(),
+      similarity: (json['similarity'] ?? 0).toDouble(),
     );
   }
 }

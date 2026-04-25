@@ -20,6 +20,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _loading = true;
   bool _saving = false;
   int? _userId;
+  String _fullName = "User";
 
   final TextEditingController _aboutController = TextEditingController();
   final TextEditingController _experienceController = TextEditingController();
@@ -40,9 +41,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final meResult = await AuthService.getMe();
 
     if (meResult["ok"] != true) {
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
       return;
     }
 
@@ -51,28 +50,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final int userId = meData["id"];
     _userId = userId;
+    _fullName = (meData["full_name"] ?? "User").toString();
 
-    final about = await ProfileLocalService.getAbout(userId);
-    final experience = await ProfileLocalService.getExperience(userId);
-    final education = await ProfileLocalService.getEducation(userId);
-    final skills = await ProfileLocalService.getSkills(userId);
-    final languages = await ProfileLocalService.getLanguages(userId);
-    final resume = await ProfileLocalService.getResumeName(userId);
-    final city = await ProfileLocalService.getCity(userId);
-    final country = await ProfileLocalService.getCountry(userId);
+    _aboutController.text = await ProfileLocalService.getAbout(userId);
+    _experienceController.text =
+        await ProfileLocalService.getExperience(userId);
+    _educationController.text =
+        await ProfileLocalService.getEducation(userId);
+    _skillsController.text =
+        (await ProfileLocalService.getSkills(userId)).join(', ');
+    _languagesController.text =
+        (await ProfileLocalService.getLanguages(userId)).join(', ');
+    _resumeController.text = await ProfileLocalService.getResumeName(userId);
+    _cityController.text = await ProfileLocalService.getCity(userId);
+    _countryController.text = await ProfileLocalService.getCountry(userId);
 
-    _aboutController.text = about;
-    _experienceController.text = experience;
-    _educationController.text = education;
-    _skillsController.text = skills.join(', ');
-    _languagesController.text = languages.join(', ');
-    _resumeController.text = resume;
-    _cityController.text = city;
-    _countryController.text = country;
-
-    setState(() {
-      _loading = false;
-    });
+    setState(() => _loading = false);
   }
 
   List<String> _splitList(String value) {
@@ -86,106 +79,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _saveProfile() async {
     if (_userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Could not find current user."),
-        ),
+        const SnackBar(content: Text("Could not find current user.")),
       );
       return;
     }
 
-    print("SAVE PROFILE START");
-
     setState(() => _saving = true);
 
     try {
+      final skillsList = _splitList(_skillsController.text);
+
       await ProfileLocalService.saveAll(
         userId: _userId!,
         about: _aboutController.text.trim(),
         experience: _experienceController.text.trim(),
         education: _educationController.text.trim(),
-        skills: _splitList(_skillsController.text),
+        skills: skillsList,
         languages: _splitList(_languagesController.text),
         resumeName: _resumeController.text.trim(),
         city: _cityController.text.trim(),
         country: _countryController.text.trim(),
       );
 
-      print("LOCAL SAVE DONE");
-
       final token = await AuthService.getToken();
-      print("TOKEN: $token");
-
-      final skillsList = _splitList(_skillsController.text);
-      print("SKILLS TO SEND: $skillsList");
 
       await ApiClient(baseUrl: "http://127.0.0.1:8000").postJson(
-        "/api/v1/profile/skills",
+        "/api/v1/profile/save",
         token: token,
         body: {
+          "user_id": _userId!,
+          "full_name": _fullName,
           "skills": skillsList,
         },
       );
 
-      print("SKILLS SENT SUCCESSFULLY");
-
       await AuthService.refreshUserEmbedding(_userId!);
-      print("EMBEDDING REFRESHED");
 
       if (!mounted) return;
       setState(() => _saving = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Profile information saved successfully."),
-        ),
+        const SnackBar(content: Text("Profile saved successfully!")),
       );
-final hasSkills = _splitList(_skillsController.text).isNotEmpty;
 
-final isIncomplete =
-    _aboutController.text.trim().isEmpty ||
-    _experienceController.text.trim().isEmpty ||
-    _educationController.text.trim().isEmpty ||
-    _splitList(_languagesController.text).isEmpty ||
-    _resumeController.text.trim().isEmpty ||
-    _cityController.text.trim().isEmpty ||
-    _countryController.text.trim().isEmpty;
-
-if (hasSkills && isIncomplete) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        "For a better experience, please complete your full profile ",
-      ),
-    ),
-  );
-} else if (!hasSkills) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        "Add your skills to start getting recommendations",
-      ),
-    ),
-  );
-} else {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        "Profile saved successfully !",
-      ),
-    ),
-  );
-}
       Navigator.pop(context);
     } catch (e) {
-      print("ERROR IN SAVE PROFILE: $e");
-
       if (!mounted) return;
       setState(() => _saving = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error saving profile: $e"),
-        ),
+        SnackBar(content: Text("Error saving profile: $e")),
       );
     }
   }
@@ -400,10 +343,7 @@ if (hasSkills && isIncomplete) {
                     const SizedBox(height: 8),
                     const Text(
                       "Example: Leadership, Teamwork, Communication",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
@@ -421,10 +361,7 @@ if (hasSkills && isIncomplete) {
                     const SizedBox(height: 8),
                     const Text(
                       "Example: English, Arabic, Spanish",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),

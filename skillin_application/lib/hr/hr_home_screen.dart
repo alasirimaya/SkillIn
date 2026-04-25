@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:skillin_application/services/auth_service.dart';
 import 'package:skillin_application/auth/login_screen.dart';
+
 class HrHomeScreen extends StatefulWidget {
   const HrHomeScreen({super.key});
 
@@ -11,14 +12,19 @@ class HrHomeScreen extends StatefulWidget {
 class _HrHomeScreenState extends State<HrHomeScreen> {
   String userName = "HR";
 
-List<dynamic> candidates = [];
-bool isLoading = true;
+  List<dynamic> candidates = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
-    _loadCandidates();
+
+    // ❗ Temporarily disabled candidates loading
+    // بسبب error من السيرفر (GET CANDIDATES ERROR)
+    // _loadCandidates();
+
+    isLoading = false;
   }
 
   Future<void> _loadUser() async {
@@ -31,22 +37,18 @@ bool isLoading = true;
       });
     }
   }
-Future<void> _loadCandidates() async {
 
-  final result = await AuthService.getCandidates();
+  Future<void> _loadCandidates() async {
+    final result = await AuthService.getCandidates();
 
-  if (mounted) {
-
-    setState(() {
-
-      candidates = result;
-      isLoading = false;
-
-    });
-
+    if (mounted) {
+      setState(() {
+        candidates = result;
+        isLoading = false;
+      });
+    }
   }
 
-}
   Widget _candidateCard({
     required String name,
     required String subtitle,
@@ -129,42 +131,29 @@ Future<void> _loadCandidates() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    
-//
-  appBar: AppBar(
+      appBar: AppBar(
+        title: const Text("HR"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await AuthService.logout();
 
-    title: const Text("HR"),
+              if (!mounted) return;
 
-    actions: [
-
-      IconButton(
-
-        icon: const Icon(Icons.logout),
-
-        onPressed: () async {
-
-          await AuthService.logout();
-
-if (!mounted) return;
-
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const LoginScreen(),
-    ),
-    (route) => false,
-  );
-        },
-
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LoginScreen(),
+                ),
+                (route) => false,
+              );
+            },
+          ),
+        ],
       ),
-
-    ],
-
-  ),
-
-  backgroundColor: const Color(0xFFF5F6FB),
-
-  body: SafeArea(
+      backgroundColor: const Color(0xFFF5F6FB),
+      body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Column(
@@ -200,43 +189,6 @@ if (!mounted) return;
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.search, color: Color(0xFFB5B8C7)),
-                                SizedBox(width: 10),
-                                Text(
-                                  "Search",
-                                  style: TextStyle(
-                                    color: Color(0xFFB5B8C7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF4A146),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(Icons.tune, color: Colors.white),
-                        ),
-                      ],
-                    )
                   ],
                 ),
               ),
@@ -251,36 +203,11 @@ if (!mounted) return;
               ),
               const SizedBox(height: 14),
               Expanded(
-                child: ListView(
-                  children: [
-                 if (isLoading)
-  const Center(child: CircularProgressIndicator())
-else
-  ...candidates.map((user) {
-
-    return _candidateCard(
-
-      name: user["full_name"] ?? "No name",
-
-      subtitle:
-          "Open to work · ${user["location"] ?? "Unknown"}",
-
-     tags: [
-
-  (user["skill"] != null && user["skill"] != "")
-      ? user["skill"]
-      : "General",
-
-  (user["job_type"] != null && user["job_type"] != "")
-      ? user["job_type"]
-      : "Open",
-
-],
-    );
-
-  }).toList(),
-                  ],
-                ),
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : const Center(
+                        child: Text("Candidates temporarily disabled"),
+                      ),
               ),
             ],
           ),

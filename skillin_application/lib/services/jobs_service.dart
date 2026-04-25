@@ -44,7 +44,8 @@ class JobsService {
 
       return {"ok": true, "data": data};
     } catch (e) {
-      final msg = e is AppError ? e.message : "Failed to load recommendations.";
+      final msg =
+          e is AppError ? e.message : "Failed to load recommendations.";
       final status = e is AppError ? e.statusCode : null;
       return {"ok": false, "msg": msg, "status": status};
     }
@@ -56,22 +57,18 @@ class JobsService {
     required String workplace,
     required String location,
     required String employmentType,
+    required String skills,
     required String description,
   }) async {
     try {
-      final fullDescription = '''
-Workplace: $workplace
-Location: $location
-Employment Type: $employmentType
-
-$description
-''';
-
       final data = await _api.postJson<Map<String, dynamic>>(
         "/api/v1/jobs/?title=${Uri.encodeComponent(title)}"
         "&company=${Uri.encodeComponent(company)}"
-        "&description=${Uri.encodeComponent(fullDescription)}"
-        "&skills=",
+        "&workplace=${Uri.encodeComponent(workplace)}"
+        "&location=${Uri.encodeComponent(location)}"
+        "&employmentType=${Uri.encodeComponent(employmentType)}"
+        "&description=${Uri.encodeComponent(description)}"
+        "&skills=${Uri.encodeComponent(skills)}",
         body: {},
         parser: (json) => (json as Map).cast<String, dynamic>(),
       );

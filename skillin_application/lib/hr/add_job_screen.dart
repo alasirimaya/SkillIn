@@ -15,6 +15,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
   final TextEditingController _companyController = TextEditingController();
   final TextEditingController _employmentTypeController =
       TextEditingController();
+  final TextEditingController _skillsController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   bool _isLoading = false;
@@ -38,6 +39,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
     final location = _locationController.text.trim();
     final company = _companyController.text.trim();
     final employmentType = _employmentTypeController.text.trim();
+    final skills = _skillsController.text.trim();
     final description = _descriptionController.text.trim();
 
     if (title.isEmpty ||
@@ -45,6 +47,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
         location.isEmpty ||
         company.isEmpty ||
         employmentType.isEmpty ||
+        skills.isEmpty ||
         description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all fields.")),
@@ -60,6 +63,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
       workplace: workplace,
       location: location,
       employmentType: employmentType,
+      skills: skills,
       description: description,
     );
 
@@ -87,6 +91,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
     _locationController.dispose();
     _companyController.dispose();
     _employmentTypeController.dispose();
+    _skillsController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -135,6 +140,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
               _field("Job location", _locationController),
               _field("Company", _companyController),
               _field("Employment type", _employmentTypeController),
+              _field("Required skills", _skillsController),
               _field("Description", _descriptionController, maxLines: 5),
             ],
           ),

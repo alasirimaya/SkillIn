@@ -14,6 +14,15 @@ class User(Base):
 
     role = Column(String(30), default="personal")
 
+    # Profile fields used for better matching
+    about = Column(Text, default="")
+    experience = Column(Text, default="")
+    education = Column(Text, default="")
+    education_level = Column(String(50), default="")
+    years_of_experience = Column(String(50), default="")
+    languages = Column(Text, default="")
+    location = Column(String(150), default="")
+
     skills = relationship("UserSkill", back_populates="user")
     applications = relationship("Application", back_populates="user")
 
@@ -23,6 +32,8 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+
 class HrProfile(Base):
     __tablename__ = "hr_profiles"
 
@@ -37,6 +48,7 @@ class HrProfile(Base):
     office_location = Column(String(150), default="")
     bio = Column(Text, default="")
 
+
 class Job(Base):
     __tablename__ = "jobs"
 
@@ -47,6 +59,11 @@ class Job(Base):
     location = Column(String(150), default="")
     workplace = Column(String(100), default="")
     employment_type = Column(String(100), default="")
+
+    # Job fields used for better matching
+    education_requirement = Column(String(50), default="")
+    experience_requirement = Column(String(50), default="")
+    languages = Column(Text, default="")
 
     description = Column(Text, default="")
     skills = Column(Text, default="")
@@ -105,6 +122,7 @@ class Application(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "job_id", name="unique_application"),
     )
+
 
 class UserEmbedding(Base):
     __tablename__ = "user_embeddings"

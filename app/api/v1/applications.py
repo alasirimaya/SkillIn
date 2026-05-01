@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -143,6 +143,30 @@ def get_job_applications(job_id: int, db: Session = Depends(get_db)):
         })
 
     return results
+
+
+@router.get("/{application_id}/cv")
+def download_cv(application_id: int, db: Session = Depends(get_db)):
+    application = db.query(Application).filter(
+        Application.id == application_id
+    ).first()
+
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    if not application.cv_data:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    cv_bytes = application.cv_data.encode("latin1")
+    filename = application.cv_filename or "cv.pdf"
+
+    return Response(
+        content=cv_bytes,
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        },
+    )
 
 
 @router.put("/{application_id}/status")

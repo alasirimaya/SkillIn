@@ -3,6 +3,7 @@ import 'package:skillin_application/auth/register_screen.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/auth/forgot_password_screen.dart';
 import '../services/auth_service.dart';
+import '../services/user_role_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -65,11 +66,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-    });
-
     if (result["ok"] == true) {
+      final savedRole = await UserRoleService.getRoleForEmail(email);
+      await UserRoleService.setCurrentRole(savedRole);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -78,6 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else {
       setState(() {
+        _isLoading = false;
         _errorMessage = (result["msg"] ?? "Login failed.").toString();
       });
     }
@@ -274,7 +281,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
                 SizedBox(height: MediaQuery.of(context).padding.top + 20),
-
                 Transform.translate(
                   offset: const Offset(0, -20),
                   child: Center(
@@ -287,9 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: topSectionHeight - 130),
-
                 Transform.translate(
                   offset: Offset(0, -formTopOverlap),
                   child: Container(
@@ -307,7 +311,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: 8),
-
                           const Center(
                             child: Text(
                               "Welcome !",
@@ -319,18 +322,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 36),
-
                           TextField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             decoration: _fieldDecoration("Email"),
                           ),
-
                           const SizedBox(height: 20),
-
                           TextField(
                             controller: _passwordController,
                             obscureText: true,
@@ -340,9 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                             decoration: _fieldDecoration("Password"),
                           ),
-
                           const SizedBox(height: 10),
-
                           Align(
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
@@ -368,15 +365,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 22),
-
                           _buildPrimaryButton(
                             text: "Login",
                             isLoading: _isLoading,
                             onTap: _isLoading ? null : _handleLogin,
                           ),
-
                           if (_errorMessage != null) ...[
                             const SizedBox(height: 14),
                             Text(
@@ -389,9 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
-
                           const SizedBox(height: 34),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -427,7 +419,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 36),
                         ],
                       ),

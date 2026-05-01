@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:skillin_application/Jobs/job_details_screen.dart';
-import 'package:skillin_application/Jobs/job_model.dart';
-import 'package:skillin_application/Jobs/jobs_list_screen.dart';
-import 'package:skillin_application/auth/auth_gate.dart';
-import 'package:skillin_application/services/auth_service.dart';
-import 'package:skillin_application/services/jobs_service.dart';
+
+import '../Jobs/job_details_screen.dart';
+import '../Jobs/job_model.dart';
+import '../Jobs/jobs_list_screen.dart';
+import '../auth/auth_gate.dart';
+import '../services/auth_service.dart';
+import '../services/jobs_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,16 +42,61 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchRecentJobs() async {
-    final response = await JobsService.getJobs();
+    final me = await AuthService.getMe();
+
+    if (me["ok"] != true) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingJobs = false;
+      });
+      return;
+    }
+
+    final Map<String, dynamic> meData =
+        Map<String, dynamic>.from(me["data"] as Map);
+
+    final int userId = meData["id"];
+
+    final response = await JobsService.getRecommendations(userId);
 
     if (response["ok"] == true) {
-      final List data = response["data"] as List;
+      final Map<String, dynamic> responseData =
+          Map<String, dynamic>.from(response["data"] as Map);
+
+      final List recommendations = responseData["recommendations"] ?? [];
+
+      final jobs = recommendations.map<JobModel>((rec) {
+        final map = Map<String, dynamic>.from(rec as Map);
+
+        double similarity = ((map["similarity"] ?? 0) as num).toDouble();
+
+        if (similarity <= 1) {
+          similarity = similarity * 100;
+        }
+
+        return JobModel(
+          id: map["job_id"] ?? map["id"] ?? 0,
+          title: (map["title"] ?? "").toString(),
+          company: (map["company"] ?? "").toString(),
+          location: (map["location"] ?? "").toString(),
+          category: (map["workplace"] ?? map["category"] ?? "").toString(),
+          type: (map["employment_type"] ?? map["type"] ?? "").toString(),
+          position: "",
+          salary: "",
+          timeAgo: "1 day ago",
+          logo: "",
+          description: (map["description"] ?? "").toString(),
+          skills: (map["skills"] ?? "").toString(),
+          educationRequirement:
+              (map["education_requirement"] ?? "").toString(),
+          experienceRequirement:
+              (map["experience_requirement"] ?? "").toString(),
+          languages: (map["languages"] ?? "").toString(),
+          similarity: similarity,
+        );
+      }).toList();
 
       if (!mounted) return;
-
-      final jobs = data
-          .map((job) => JobModel.fromJson(Map<String, dynamic>.from(job)))
-          .toList();
 
       setState(() {
         allJobs = jobs;
@@ -168,7 +214,10 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => JobDetailsScreen(jobId: job.id),
+            builder: (_) => JobDetailsScreen(
+              jobId: job.id,
+              similarity: job.similarity,
+            ),
           ),
         );
       },
@@ -269,7 +318,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => JobDetailsScreen(jobId: job.id),
+                        builder: (_) => JobDetailsScreen(
+                          jobId: job.id,
+                          similarity: job.similarity,
+                        ),
                       ),
                     );
                   },
@@ -305,29 +357,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
-                  ),
-                ),
-                SizedBox(height: 18),
-                SizedBox(
-                  width: 120,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF7A541),
-                      borderRadius: BorderRadius.all(Radius.circular(14)),
-                    ),
-                    child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                      child: Center(
-                        child: Text(
-                          "Join Now",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
                 ),
               ],

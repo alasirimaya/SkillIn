@@ -33,7 +33,8 @@ static const String baseUrl =
 */
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:skillin_application/models/application_model.dart';
+
+import '../models/application_model.dart';
 
 class ApplicationService {
   static const String baseUrl = "http://127.0.0.1:8000/api/v1";

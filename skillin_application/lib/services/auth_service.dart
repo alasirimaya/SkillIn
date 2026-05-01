@@ -24,16 +24,20 @@ class AuthService {
       );
 
       final token = data["access_token"]?.toString();
+
       if (token == null || token.isEmpty) {
         return {"ok": false, "msg": "No token returned from server."};
       }
 
       await _storage.write(key: _tokenKey, value: token);
+
       return {"ok": true, "token": token};
     } catch (e) {
       print("LOGIN ERROR: $e");
+
       final msg = e is AppError ? e.message : "Login failed: $e";
       final status = e is AppError ? e.statusCode : null;
+
       return {"ok": false, "msg": msg, "status": status};
     }
   }
@@ -58,8 +62,10 @@ class AuthService {
       return {"ok": true};
     } catch (e) {
       print("REGISTER ERROR: $e");
+
       final msg = e is AppError ? e.message : "Registration failed: $e";
       final status = e is AppError ? e.statusCode : null;
+
       return {"ok": false, "msg": msg, "status": status};
     }
   }
@@ -83,15 +89,18 @@ class AuthService {
       };
     } catch (e) {
       print("FORGOT PASSWORD ERROR: $e");
+
       final msg =
           e is AppError ? e.message : "Forgot password request failed: $e";
       final status = e is AppError ? e.statusCode : null;
+
       return {"ok": false, "msg": msg, "status": status};
     }
   }
 
   static Future<Map<String, dynamic>> getMe() async {
     final token = await getToken();
+
     if (token == null || token.isEmpty) {
       return {"ok": false, "msg": "No token found. Please login first."};
     }
@@ -111,6 +120,7 @@ class AuthService {
 
       final msg = e is AppError ? e.message : "Failed to fetch user data.";
       final status = e is AppError ? e.statusCode : null;
+
       return {"ok": false, "msg": msg, "status": status};
     }
   }
@@ -127,6 +137,7 @@ class AuthService {
     } catch (e) {
       final msg = e is AppError ? e.message : "Failed to refresh embedding.";
       final status = e is AppError ? e.statusCode : null;
+
       return {"ok": false, "msg": msg, "status": status};
     }
   }
@@ -136,8 +147,8 @@ class AuthService {
   }
 
   static Future<bool> isLoggedIn() async {
-    final t = await getToken();
-    return t != null && t.isNotEmpty;
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
   }
 
   static Future<void> logout() async {

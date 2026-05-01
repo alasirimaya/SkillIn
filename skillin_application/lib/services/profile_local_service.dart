@@ -5,9 +5,11 @@ class ProfileLocalService {
   static const String _aboutKey = 'profile_about';
   static const String _experienceKey = 'profile_experience';
   static const String _educationKey = 'profile_education';
+  static const String _educationLevelKey = 'profile_education_level';
+  static const String _yearsOfExperienceKey = 'profile_years_of_experience';
   static const String _skillsKey = 'profile_skills';
   static const String _languagesKey = 'profile_languages';
-  static const String _resumeNameKey = 'profile_resume_name';
+  static const String _certificatesKey = 'profile_certificates';
   static const String _cityKey = 'profile_city';
   static const String _countryKey = 'profile_country';
 
@@ -80,6 +82,24 @@ class ProfileLocalService {
     return _getStringWithMigration(_educationKey, userId);
   }
 
+  static Future<void> saveEducationLevel(int userId, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key(_educationLevelKey, userId), value);
+  }
+
+  static Future<String> getEducationLevel(int userId) async {
+    return _getStringWithMigration(_educationLevelKey, userId);
+  }
+
+  static Future<void> saveYearsOfExperience(int userId, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key(_yearsOfExperienceKey, userId), value);
+  }
+
+  static Future<String> getYearsOfExperience(int userId) async {
+    return _getStringWithMigration(_yearsOfExperienceKey, userId);
+  }
+
   static Future<void> saveSkills(int userId, List<String> skills) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key(_skillsKey, userId), jsonEncode(skills));
@@ -98,13 +118,19 @@ class ProfileLocalService {
     return _getListWithMigration(_languagesKey, userId);
   }
 
-  static Future<void> saveResumeName(int userId, String value) async {
+  static Future<void> saveCertificates(
+    int userId,
+    List<String> certificates,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key(_resumeNameKey, userId), value);
+    await prefs.setString(
+      _key(_certificatesKey, userId),
+      jsonEncode(certificates),
+    );
   }
 
-  static Future<String> getResumeName(int userId) async {
-    return _getStringWithMigration(_resumeNameKey, userId);
+  static Future<List<String>> getCertificates(int userId) async {
+    return _getListWithMigration(_certificatesKey, userId);
   }
 
   static Future<void> saveCity(int userId, String value) async {
@@ -130,22 +156,27 @@ class ProfileLocalService {
     required String about,
     required String experience,
     required String education,
+    required String educationLevel,
+    required String yearsOfExperience,
     required List<String> skills,
     required List<String> languages,
-    required String resumeName,
+    required List<String> certificates,
     String? city,
     String? country,
   }) async {
     await saveAbout(userId, about);
     await saveExperience(userId, experience);
     await saveEducation(userId, education);
+    await saveEducationLevel(userId, educationLevel);
+    await saveYearsOfExperience(userId, yearsOfExperience);
     await saveSkills(userId, skills);
     await saveLanguages(userId, languages);
-    await saveResumeName(userId, resumeName);
+    await saveCertificates(userId, certificates);
 
     if (city != null) {
       await saveCity(userId, city);
     }
+
     if (country != null) {
       await saveCountry(userId, country);
     }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:skillin_application/models/application_model.dart';
-import 'package:skillin_application/services/application_service.dart';
-import 'package:skillin_application/services/auth_service.dart';
-import 'package:skillin_application/services/profile_local_service.dart';
-import 'package:skillin_application/profile/edit_profile_screen.dart';
+
+import '../models/application_model.dart';
+import '../services/application_service.dart';
+import '../services/auth_service.dart';
+import '../services/profile_local_service.dart';
+import '../profile/edit_profile_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

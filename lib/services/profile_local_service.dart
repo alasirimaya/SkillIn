@@ -7,7 +7,6 @@ class ProfileLocalService {
   static const String _educationKey = 'profile_education';
   static const String _skillsKey = 'profile_skills';
   static const String _languagesKey = 'profile_languages';
-  static const String _resumeNameKey = 'profile_resume_name';
 
   static Future<void> saveAbout(String value) async {
     final prefs = await SharedPreferences.getInstance();
@@ -48,8 +47,7 @@ class ProfileLocalService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_skillsKey);
     if (raw == null || raw.isEmpty) return [];
-    final decoded = jsonDecode(raw);
-    return List<String>.from(decoded);
+    return List<String>.from(jsonDecode(raw));
   }
 
   static Future<void> saveLanguages(List<String> languages) async {
@@ -61,18 +59,7 @@ class ProfileLocalService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_languagesKey);
     if (raw == null || raw.isEmpty) return [];
-    final decoded = jsonDecode(raw);
-    return List<String>.from(decoded);
-  }
-
-  static Future<void> saveResumeName(String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_resumeNameKey, value);
-  }
-
-  static Future<String> getResumeName() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_resumeNameKey) ?? '';
+    return List<String>.from(jsonDecode(raw));
   }
 
   static Future<void> saveAll({
@@ -81,13 +68,11 @@ class ProfileLocalService {
     required String education,
     required List<String> skills,
     required List<String> languages,
-    required String resumeName,
   }) async {
     await saveAbout(about);
     await saveExperience(experience);
     await saveEducation(education);
     await saveSkills(skills);
     await saveLanguages(languages);
-    await saveResumeName(resumeName);
   }
 }

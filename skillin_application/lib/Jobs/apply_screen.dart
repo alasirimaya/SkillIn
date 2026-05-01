@@ -310,9 +310,10 @@ class _ApplyScreenState extends State<ApplyScreen> {
 */
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:skillin_application/models/application_model.dart';
-import 'package:skillin_application/services/application_service.dart';
-import 'package:skillin_application/services/auth_service.dart';
+
+import '../models/application_model.dart';
+import '../services/application_service.dart';
+import '../services/auth_service.dart';
 import 'job_model.dart';
 import 'success_screen.dart';
 

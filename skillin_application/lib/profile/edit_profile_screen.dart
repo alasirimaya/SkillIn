@@ -19,18 +19,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   bool _loading = true;
   bool _saving = false;
+
   int? _userId;
   String _fullName = "User";
+
+  String _educationLevel = "";
+  String _yearsOfExperience = "";
+
+  final List<String> _educationOptions = [
+    "High School",
+    "Diploma",
+    "Bachelor",
+    "Master",
+    "PhD",
+  ];
+
+  final List<String> _experienceOptions = [
+    "0-1 years",
+    "1-3 years",
+    "3-5 years",
+    "5+ years",
+  ];
 
   final TextEditingController _aboutController = TextEditingController();
   final TextEditingController _experienceController = TextEditingController();
   final TextEditingController _educationController = TextEditingController();
   final TextEditingController _skillsController = TextEditingController();
   final TextEditingController _languagesController = TextEditingController();
-  final TextEditingController _resumeController = TextEditingController();
+  final TextEditingController _certificatesController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
-final TextEditingController _jobTypeController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -41,31 +60,35 @@ final TextEditingController _jobTypeController = TextEditingController();
     final meResult = await AuthService.getMe();
 
     if (meResult["ok"] != true) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
       return;
     }
 
-    final Map<String, dynamic> meData =
-        Map<String, dynamic>.from(meResult["data"] as Map);
+    final data = Map<String, dynamic>.from(meResult["data"] as Map);
+    _userId = data["id"];
+    _fullName = (data["full_name"] ?? "User").toString();
 
-    final int userId = meData["id"];
-    _userId = userId;
-    _fullName = (meData["full_name"] ?? "User").toString();
-
-    _aboutController.text = await ProfileLocalService.getAbout(userId);
+    _aboutController.text = await ProfileLocalService.getAbout(_userId!);
     _experienceController.text =
-        await ProfileLocalService.getExperience(userId);
+        await ProfileLocalService.getExperience(_userId!);
     _educationController.text =
-        await ProfileLocalService.getEducation(userId);
-    _skillsController.text =
-        (await ProfileLocalService.getSkills(userId)).join(', ');
-    _languagesController.text =
-        (await ProfileLocalService.getLanguages(userId)).join(', ');
-    _resumeController.text = await ProfileLocalService.getResumeName(userId);
-    _cityController.text = await ProfileLocalService.getCity(userId);
-    _countryController.text = await ProfileLocalService.getCountry(userId);
+        await ProfileLocalService.getEducation(_userId!);
 
-    setState(() => _loading = false);
+    _educationLevel = await ProfileLocalService.getEducationLevel(_userId!);
+    _yearsOfExperience =
+        await ProfileLocalService.getYearsOfExperience(_userId!);
+
+    _skillsController.text =
+        (await ProfileLocalService.getSkills(_userId!)).join(', ');
+    _languagesController.text =
+        (await ProfileLocalService.getLanguages(_userId!)).join(', ');
+    _certificatesController.text =
+        (await ProfileLocalService.getCertificates(_userId!)).join(', ');
+
+    _cityController.text = await ProfileLocalService.getCity(_userId!);
+    _countryController.text = await ProfileLocalService.getCountry(_userId!);
+
+    if (mounted) setState(() => _loading = false);
   }
 
   List<String> _splitList(String value) {
@@ -86,19 +109,27 @@ final TextEditingController _jobTypeController = TextEditingController();
 
     setState(() => _saving = true);
 
-    try {
-      final skillsList = _splitList(_skillsController.text);
+    final skillsList = _splitList(_skillsController.text);
+    final languagesList = _splitList(_languagesController.text);
+    final certificatesList = _splitList(_certificatesController.text);
 
+    final city = _cityController.text.trim();
+    final country = _countryController.text.trim();
+    final locationText = [city, country].where((e) => e.isNotEmpty).join(", ");
+
+    try {
       await ProfileLocalService.saveAll(
         userId: _userId!,
         about: _aboutController.text.trim(),
         experience: _experienceController.text.trim(),
         education: _educationController.text.trim(),
+        educationLevel: _educationLevel,
+        yearsOfExperience: _yearsOfExperience,
         skills: skillsList,
-        languages: _splitList(_languagesController.text),
-        resumeName: _resumeController.text.trim(),
-        city: _cityController.text.trim(),
-        country: _countryController.text.trim(),
+        languages: languagesList,
+        certificates: certificatesList,
+        city: city,
+        country: country,
       );
 
       final token = await AuthService.getToken();
@@ -109,15 +140,20 @@ final TextEditingController _jobTypeController = TextEditingController();
         body: {
           "user_id": _userId!,
           "full_name": _fullName,
+          "about": _aboutController.text.trim(),
+          "experience": _experienceController.text.trim(),
+          "education": _educationController.text.trim(),
+          "education_level": _educationLevel,
+          "years_of_experience": _yearsOfExperience,
           "skills": skillsList,
- "location": _cityController.text.trim(),
-  "job_type": _jobTypeController.text.trim(),
+          "languages": languagesList,
+          "certificates": certificatesList,
+          "location": locationText,
         },
       );
 
-      await AuthService.refreshUserEmbedding(_userId!);
-
       if (!mounted) return;
+
       setState(() => _saving = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +163,7 @@ final TextEditingController _jobTypeController = TextEditingController();
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
+
       setState(() => _saving = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -142,10 +179,9 @@ final TextEditingController _jobTypeController = TextEditingController();
     _educationController.dispose();
     _skillsController.dispose();
     _languagesController.dispose();
-    _resumeController.dispose();
+    _certificatesController.dispose();
     _cityController.dispose();
     _countryController.dispose();
-    _jobTypeController.dispose();
     super.dispose();
   }
 
@@ -283,6 +319,25 @@ final TextEditingController _jobTypeController = TextEditingController();
     );
   }
 
+  Widget _buildDropdown({
+    required String value,
+    required String hint,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value.isEmpty ? null : value,
+      decoration: _fieldDecoration(hint),
+      items: items.map((item) {
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Text(item),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -306,6 +361,7 @@ final TextEditingController _jobTypeController = TextEditingController();
           child: Column(
             children: [
               _buildHeader(),
+
               _buildSectionCard(
                 icon: Icons.person_outline,
                 title: "About me",
@@ -315,24 +371,57 @@ final TextEditingController _jobTypeController = TextEditingController();
                   maxLines: 4,
                 ),
               ),
+
+              _buildSectionCard(
+                icon: Icons.work_outline,
+                title: "Years of experience",
+                child: _buildDropdown(
+                  value: _yearsOfExperience,
+                  hint: "Select years of experience",
+                  items: _experienceOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _yearsOfExperience = value ?? "";
+                    });
+                  },
+                ),
+              ),
+
               _buildSectionCard(
                 icon: Icons.work_outline,
                 title: "Work experience",
                 child: _buildTextField(
                   controller: _experienceController,
-                  hint: "Example: Manager at PWC (2021 - 2025)",
+                  hint: "Example: Marketing Intern at Unilever (2023 - 2024)",
                   maxLines: 3,
                 ),
               ),
+
+              _buildSectionCard(
+                icon: Icons.school_outlined,
+                title: "Education level",
+                child: _buildDropdown(
+                  value: _educationLevel,
+                  hint: "Select education level",
+                  items: _educationOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _educationLevel = value ?? "";
+                    });
+                  },
+                ),
+              ),
+
               _buildSectionCard(
                 icon: Icons.school_outlined,
                 title: "Education",
                 child: _buildTextField(
                   controller: _educationController,
-                  hint: "Example: Information Technology - PNU",
+                  hint: "Example: Bachelor of Marketing",
                   maxLines: 3,
                 ),
               ),
+
               _buildSectionCard(
                 icon: Icons.hub_outlined,
                 title: "Skill",
@@ -345,20 +434,13 @@ final TextEditingController _jobTypeController = TextEditingController();
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      "Example: Leadership, Teamwork, Communication",
+                      "Example: Digital Marketing, SEO, Branding, Analytics",
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
               ),
-              _buildSectionCard(
-  icon: Icons.work_outline,
-  title: "Job Type",
-  child: _buildTextField(
-    controller: _jobTypeController,
-    hint: "Full-time / Part-time",
-  ),
-),
+
               _buildSectionCard(
                 icon: Icons.workspace_premium_outlined,
                 title: "Language",
@@ -377,14 +459,26 @@ final TextEditingController _jobTypeController = TextEditingController();
                   ],
                 ),
               ),
+
               _buildSectionCard(
-                icon: Icons.description_outlined,
-                title: "Resume",
-                child: _buildTextField(
-                  controller: _resumeController,
-                  hint: "Enter your resume file name",
+                icon: Icons.verified_outlined,
+                title: "Certificates",
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTextField(
+                      controller: _certificatesController,
+                      hint: "Enter certificates separated by commas",
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Example: Google Ads, HubSpot Marketing, Meta Blueprint",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
+
               _buildSectionCard(
                 icon: Icons.location_city_outlined,
                 title: "City",
@@ -393,6 +487,7 @@ final TextEditingController _jobTypeController = TextEditingController();
                   hint: "Enter your city",
                 ),
               ),
+
               _buildSectionCard(
                 icon: Icons.public_outlined,
                 title: "Country",

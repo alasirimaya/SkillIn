@@ -20,14 +20,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String education = "";
   List<String> skills = [];
   List<String> languages = [];
-  String resume = "";
 
   bool showAbout = false;
   bool showExperience = false;
   bool showEducation = false;
   bool showSkills = false;
   bool showLanguages = false;
-  bool showResume = false;
 
   static const orange = Color(0xFFFF9228);
   static const blueText = Color(0xFF150B3D);
@@ -56,7 +54,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     education = await ProfileLocalService.getEducation();
     skills = await ProfileLocalService.getSkills();
     languages = await ProfileLocalService.getLanguages();
-    resume = await ProfileLocalService.getResumeName();
 
     if (mounted) {
       setState(() {
@@ -137,10 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: const Color(0xFFF2F2F6),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.black87),
-      ),
+      child: Text(text, style: const TextStyle(color: Colors.black87)),
     );
   }
 
@@ -150,7 +144,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required bool expanded,
     required VoidCallback onPlusTap,
     required Widget content,
-    bool showEdit = true,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -175,14 +168,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              if (showEdit)
-                GestureDetector(
-                  onTap: _openEditProfile,
-                  child: const Icon(
-                    Icons.edit_outlined,
-                    color: Color(0xFF0E397B),
-                  ),
+              GestureDetector(
+                onTap: _openEditProfile,
+                child: const Icon(
+                  Icons.edit_outlined,
+                  color: Color(0xFF0E397B),
                 ),
+              ),
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: onPlusTap,
@@ -216,10 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _emptyText(String text) {
     return Text(
       text,
-      style: const TextStyle(
-        color: Colors.grey,
-        fontSize: 14,
-      ),
+      style: const TextStyle(color: Colors.grey, fontSize: 14),
     );
   }
 
@@ -228,9 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_loading) {
       return const Scaffold(
         backgroundColor: pageBg,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -249,11 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "About me",
                     icon: Icons.person_outline,
                     expanded: showAbout,
-                    onPlusTap: () {
-                      setState(() {
-                        showAbout = !showAbout;
-                      });
-                    },
+                    onPlusTap: () => setState(() => showAbout = !showAbout),
                     content: Align(
                       alignment: Alignment.centerLeft,
                       child: about.isEmpty
@@ -272,11 +255,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Work experience",
                     icon: Icons.work_outline,
                     expanded: showExperience,
-                    onPlusTap: () {
-                      setState(() {
-                        showExperience = !showExperience;
-                      });
-                    },
+                    onPlusTap: () =>
+                        setState(() => showExperience = !showExperience),
                     content: Align(
                       alignment: Alignment.centerLeft,
                       child: experience.isEmpty
@@ -295,11 +275,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Education",
                     icon: Icons.school_outlined,
                     expanded: showEducation,
-                    onPlusTap: () {
-                      setState(() {
-                        showEducation = !showEducation;
-                      });
-                    },
+                    onPlusTap: () =>
+                        setState(() => showEducation = !showEducation),
                     content: Align(
                       alignment: Alignment.centerLeft,
                       child: education.isEmpty
@@ -315,14 +292,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   _buildSectionCard(
-                    title: "Skill",
+                    title: "Skills",
                     icon: Icons.hub_outlined,
                     expanded: showSkills,
-                    onPlusTap: () {
-                      setState(() {
-                        showSkills = !showSkills;
-                      });
-                    },
+                    onPlusTap: () => setState(() => showSkills = !showSkills),
                     content: skills.isEmpty
                         ? _emptyText("No skills added yet.")
                         : Wrap(
@@ -332,62 +305,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                   ),
                   _buildSectionCard(
-                    title: "Language",
+                    title: "Languages",
                     icon: Icons.workspace_premium_outlined,
                     expanded: showLanguages,
-                    onPlusTap: () {
-                      setState(() {
-                        showLanguages = !showLanguages;
-                      });
-                    },
+                    onPlusTap: () =>
+                        setState(() => showLanguages = !showLanguages),
                     content: languages.isEmpty
                         ? _emptyText("No languages added yet.")
                         : Wrap(
                             spacing: 10,
                             runSpacing: 10,
                             children: languages.map(_buildChip).toList(),
-                          ),
-                  ),
-                  _buildSectionCard(
-                    title: "Resume",
-                    icon: Icons.description_outlined,
-                    expanded: showResume,
-                    onPlusTap: () {
-                      setState(() {
-                        showResume = !showResume;
-                      });
-                    },
-                    content: resume.isEmpty
-                        ? _emptyText("No resume added yet.")
-                        : Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF5F5F),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "PDF",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Text(
-                                  resume,
-                                  style: const TextStyle(
-                                    color: blueText,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                   ),
                   const SizedBox(height: 20),

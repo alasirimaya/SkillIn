@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skillin_application/services/jobs_service.dart';
+import '../services/jobs_service.dart';
 
 class AddJobScreen extends StatefulWidget {
   const AddJobScreen({super.key});
@@ -15,8 +15,25 @@ class _AddJobScreenState extends State<AddJobScreen> {
   final TextEditingController _companyController = TextEditingController();
   final TextEditingController _employmentTypeController =
       TextEditingController();
+
+  final TextEditingController _educationRequirementController =
+      TextEditingController();
+
+  final TextEditingController _languagesController = TextEditingController();
   final TextEditingController _skillsController = TextEditingController();
+  final TextEditingController _certificationsController =
+      TextEditingController();
+
   final TextEditingController _descriptionController = TextEditingController();
+
+  String _experienceRequirement = "";
+
+  final List<String> _experienceOptions = [
+    "0-1 years",
+    "1-3 years",
+    "3-5 years",
+    "5+ years",
+  ];
 
   bool _isLoading = false;
 
@@ -33,24 +50,47 @@ class _AddJobScreenState extends State<AddJobScreen> {
     );
   }
 
+  Widget _dropdownField({
+    required String hint,
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: DropdownButtonFormField<String>(
+        value: value.isEmpty ? null : value,
+        decoration: _fieldDecoration(hint),
+        items: items.map((item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(item),
+          );
+        }).toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
   Future<void> _handlePostJob() async {
     final title = _positionController.text.trim();
     final workplace = _workplaceController.text.trim();
     final location = _locationController.text.trim();
     final company = _companyController.text.trim();
     final employmentType = _employmentTypeController.text.trim();
+
+    final educationRequirement = _educationRequirementController.text.trim();
+    final experienceRequirement = _experienceRequirement.trim();
+    final languages = _languagesController.text.trim();
     final skills = _skillsController.text.trim();
+    final certifications = _certificationsController.text.trim();
     final description = _descriptionController.text.trim();
 
-    if (title.isEmpty ||
-        workplace.isEmpty ||
-        location.isEmpty ||
-        company.isEmpty ||
-        employmentType.isEmpty ||
-        skills.isEmpty ||
-        description.isEmpty) {
+    if (title.isEmpty || location.isEmpty || company.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields.")),
+        const SnackBar(
+          content: Text("Please fill Job position, Job location, and Company."),
+        ),
       );
       return;
     }
@@ -63,8 +103,18 @@ class _AddJobScreenState extends State<AddJobScreen> {
       workplace: workplace,
       location: location,
       employmentType: employmentType,
+      educationRequirement: educationRequirement,
+      experienceRequirement: experienceRequirement,
+      languages: languages,
       skills: skills,
-      description: description,
+      description: '''
+Education Requirement: $educationRequirement
+Experience Requirement: $experienceRequirement
+Preferred Languages: $languages
+Preferred Certifications: $certifications
+
+$description
+''',
     );
 
     if (!mounted) return;
@@ -91,13 +141,19 @@ class _AddJobScreenState extends State<AddJobScreen> {
     _locationController.dispose();
     _companyController.dispose();
     _employmentTypeController.dispose();
+    _educationRequirementController.dispose();
+    _languagesController.dispose();
     _skillsController.dispose();
+    _certificationsController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  Widget _field(String title, TextEditingController controller,
-      {int maxLines = 1}) {
+  Widget _field(
+    String title,
+    TextEditingController controller, {
+    int maxLines = 1,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       child: TextField(
@@ -137,9 +193,22 @@ class _AddJobScreenState extends State<AddJobScreen> {
             children: [
               _field("Job position*", _positionController),
               _field("Type of workplace", _workplaceController),
-              _field("Job location", _locationController),
-              _field("Company", _companyController),
+              _field("Job location*", _locationController),
+              _field("Company*", _companyController),
               _field("Employment type", _employmentTypeController),
+              _field("Education requirement", _educationRequirementController),
+              _dropdownField(
+                hint: "Experience requirement",
+                value: _experienceRequirement,
+                items: _experienceOptions,
+                onChanged: (value) {
+                  setState(() {
+                    _experienceRequirement = value ?? "";
+                  });
+                },
+              ),
+              _field("Languages", _languagesController),
+              _field("Preferred Certifications", _certificationsController),
               _field("Required skills", _skillsController),
               _field("Description", _descriptionController, maxLines: 5),
             ],

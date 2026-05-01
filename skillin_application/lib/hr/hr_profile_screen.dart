@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skillin_application/hr/edit_hr_profile_screen.dart';
+import 'edit_hr_profile_screen.dart';
 import 'package:skillin_application/services/auth_service.dart';
 import 'package:skillin_application/services/api_client.dart';
 

@@ -1,10 +1,6 @@
-
-
-
-
 import 'package:flutter/material.dart';
-import 'package:skillin_application/profile/saved_job_model.dart';
-import 'package:skillin_application/profile/saved_jobs_provider.dart';
+import '../profile/saved_job_model.dart';
+import '../profile/saved_jobs_provider.dart';
 import 'job_model.dart';
 
 class JobCard extends StatefulWidget {
@@ -13,6 +9,7 @@ class JobCard extends StatefulWidget {
   final String jobType;
   final String timeAgo;
   final VoidCallback onTap;
+  final VoidCallback? onSkillGapTap;
 
   const JobCard({
     super.key,
@@ -21,6 +18,7 @@ class JobCard extends StatefulWidget {
     required this.jobType,
     required this.timeAgo,
     required this.onTap,
+    this.onSkillGapTap,
   });
 
   @override
@@ -112,7 +110,9 @@ class _JobCardState extends State<JobCard> {
                 ),
               ],
             ),
+
             const SizedBox(height: 14),
+
             Row(
               children: [
                 _tag(
@@ -122,7 +122,9 @@ class _JobCardState extends State<JobCard> {
                 _tag(widget.jobType),
               ],
             ),
+
             const SizedBox(height: 14),
+
             Row(
               children: [
                 Text(
@@ -133,6 +135,26 @@ class _JobCardState extends State<JobCard> {
                   ),
                 ),
                 const Spacer(),
+
+                if (widget.onSkillGapTap != null) ...[
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0F1F57),
+                      elevation: 0,
+                      side: const BorderSide(
+                        color: Color(0xFF0F1F57),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: widget.onSkillGapTap,
+                    child: const Text("Skill Gap"),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD8E3FF),

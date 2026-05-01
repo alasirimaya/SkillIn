@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/profile_local_service.dart';
+import '../services/auth_service.dart';
+import '../services/api_client.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -18,12 +20,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _loading = true;
   bool _saving = false;
 
+  int? _userId;
+  String _fullName = "User";
+
   final TextEditingController _aboutController = TextEditingController();
   final TextEditingController _experienceController = TextEditingController();
   final TextEditingController _educationController = TextEditingController();
   final TextEditingController _skillsController = TextEditingController();
   final TextEditingController _languagesController = TextEditingController();
-  final TextEditingController _resumeController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
 
   @override
   void initState() {
@@ -32,19 +38,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _loadSavedData() async {
-    final about = await ProfileLocalService.getAbout();
-    final experience = await ProfileLocalService.getExperience();
-    final education = await ProfileLocalService.getEducation();
-    final skills = await ProfileLocalService.getSkills();
-    final languages = await ProfileLocalService.getLanguages();
-    final resume = await ProfileLocalService.getResumeName();
+    final meResult = await AuthService.getMe();
 
-    _aboutController.text = about;
-    _experienceController.text = experience;
-    _educationController.text = education;
-    _skillsController.text = skills.join(', ');
-    _languagesController.text = languages.join(', ');
-    _resumeController.text = resume;
+    if (meResult["ok"] == true) {
+      final data = Map<String, dynamic>.from(meResult["data"] as Map);
+      _userId = data["id"];
+      _fullName = (data["full_name"] ?? "User").toString();
+    }
+
+    _aboutController.text = await ProfileLocalService.getAbout();
+    _experienceController.text = await ProfileLocalService.getExperience();
+    _educationController.text = await ProfileLocalService.getEducation();
+    _skillsController.text = (await ProfileLocalService.getSkills()).join(', ');
+    _languagesController.text =
+        (await ProfileLocalService.getLanguages()).join(', ');
 
     setState(() {
       _loading = false;
@@ -60,27 +67,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not find current user.")),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
 
-    await ProfileLocalService.saveAll(
-      about: _aboutController.text.trim(),
-      experience: _experienceController.text.trim(),
-      education: _educationController.text.trim(),
-      skills: _splitList(_skillsController.text),
-      languages: _splitList(_languagesController.text),
-      resumeName: _resumeController.text.trim(),
-    );
+    final skillsList = _splitList(_skillsController.text);
+    final languagesList = _splitList(_languagesController.text);
 
-    if (!mounted) return;
-    setState(() => _saving = false);
+    try {
+      await ProfileLocalService.saveAll(
+        about: _aboutController.text.trim(),
+        experience: _experienceController.text.trim(),
+        education: _educationController.text.trim(),
+        skills: skillsList,
+        languages: languagesList,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Profile information saved successfully."),
-      ),
-    );
+      final token = await AuthService.getToken();
 
-    Navigator.pop(context);
+      await ApiClient(baseUrl: "http://127.0.0.1:8000").postJson(
+        "/api/v1/profile/save",
+        token: token,
+        body: {
+          "user_id": _userId!,
+          "full_name": _fullName,
+          "about": _aboutController.text.trim(),
+          "experience": _experienceController.text.trim(),
+          "education": _educationController.text.trim(),
+          "skills": skillsList,
+          "languages": languagesList,
+          "location":
+              "${_cityController.text.trim()}, ${_countryController.text.trim()}",
+        },
+      );
+
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile saved successfully.")),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error saving profile: $e")),
+      );
+    }
   }
 
   @override
@@ -90,7 +131,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _educationController.dispose();
     _skillsController.dispose();
     _languagesController.dispose();
-    _resumeController.dispose();
+    _cityController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
@@ -267,7 +309,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 title: "Work experience",
                 child: _buildTextField(
                   controller: _experienceController,
-                  hint: "Example: Manager at PWC (2021 - 2025)",
+                  hint: "Example: Marketing Intern at Unilever (2023 - 2024)",
                   maxLines: 3,
                 ),
               ),
@@ -277,61 +319,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 title: "Education",
                 child: _buildTextField(
                   controller: _educationController,
-                  hint: "Example: Information Technology - PNU",
+                  hint: "Example: Bachelor of Marketing",
                   maxLines: 3,
                 ),
               ),
 
               _buildSectionCard(
                 icon: Icons.hub_outlined,
-                title: "Skill",
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextField(
-                      controller: _skillsController,
-                      hint: "Enter skills separated by commas",
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Example: Leadership, Teamwork, Communication",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                title: "Skills",
+                child: _buildTextField(
+                  controller: _skillsController,
+                  hint: "Digital Marketing, SEO, Branding, Analytics",
                 ),
               ),
 
               _buildSectionCard(
                 icon: Icons.workspace_premium_outlined,
-                title: "Language",
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextField(
-                      controller: _languagesController,
-                      hint: "Enter languages separated by commas",
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Example: English, Arabic, Spanish",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                title: "Languages",
+                child: _buildTextField(
+                  controller: _languagesController,
+                  hint: "Arabic, English",
                 ),
               ),
 
               _buildSectionCard(
-                icon: Icons.description_outlined,
-                title: "Resume",
+                icon: Icons.location_city_outlined,
+                title: "City",
                 child: _buildTextField(
-                  controller: _resumeController,
-                  hint: "Enter your resume file name",
+                  controller: _cityController,
+                  hint: "Riyadh",
+                ),
+              ),
+
+              _buildSectionCard(
+                icon: Icons.public_outlined,
+                title: "Country",
+                child: _buildTextField(
+                  controller: _countryController,
+                  hint: "Saudi Arabia",
                 ),
               ),
             ],

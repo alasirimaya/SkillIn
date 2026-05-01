@@ -221,6 +221,7 @@ import 'job_details_screen.dart';
 import 'job_model.dart';
 import '../services/jobs_service.dart';
 import '../services/auth_service.dart';
+import 'skill_gap_screen.dart';
 
 class JobsListScreen extends StatefulWidget {
   final bool useRecommendations;
@@ -318,6 +319,11 @@ class _JobsListScreenState extends State<JobsListScreen> {
               logo: "",
               description: (map["description"] ?? "").toString(),
               skills: (map["skills"] ?? "").toString(),
+              educationRequirement:
+                  (map["education_requirement"] ?? "").toString(),
+              experienceRequirement:
+                  (map["experience_requirement"] ?? "").toString(),
+              languages: (map["languages"] ?? "").toString(),
               similarity: similarity,
             );
           }).toList();
@@ -692,15 +698,17 @@ class _JobsListScreenState extends State<JobsListScreen> {
                                                 Icon(
                                                   _matchIcon(safeSimilarity),
                                                   size: 18,
-                                                  color:
-                                                      _matchColor(safeSimilarity),
+                                                  color: _matchColor(
+                                                    safeSimilarity,
+                                                  ),
                                                 ),
                                                 const SizedBox(width: 6),
                                                 Text(
                                                   "Match: $matchPercent%",
                                                   style: TextStyle(
                                                     color: _matchColor(
-                                                        safeSimilarity),
+                                                      safeSimilarity,
+                                                    ),
                                                     fontWeight: FontWeight.w700,
                                                   ),
                                                 ),

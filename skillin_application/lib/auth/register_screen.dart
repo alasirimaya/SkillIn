@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:skillin_application/auth/auth_gate.dart';
 import 'package:skillin_application/auth/login_screen.dart';
 import 'package:skillin_application/services/auth_service.dart';
+import '../services/user_role_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -91,6 +92,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     if (result["ok"] == true) {
+      await UserRoleService.saveRoleForEmail(email, selectedRole!);
+      await UserRoleService.setCurrentRole(selectedRole!);
+
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AuthGate()),

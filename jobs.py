@@ -18,6 +18,9 @@ def create_job(
     location: str = "",
     employmentType: str = "",
     employment_type: str = "",
+    education_requirement: str = "",
+    experience_requirement: str = "",
+    languages: str = "",
     description: str = "",
     skills: str = "",
     db: Session = Depends(get_db)
@@ -30,6 +33,9 @@ def create_job(
         workplace=workplace,
         location=location,
         employment_type=final_employment_type,
+        education_requirement=education_requirement,
+        experience_requirement=experience_requirement,
+        languages=languages,
         description=description,
         skills=skills
     )
@@ -50,6 +56,9 @@ def create_job(
         "workplace": new_job.workplace,
         "location": new_job.location,
         "employment_type": new_job.employment_type,
+        "education_requirement": new_job.education_requirement,
+        "experience_requirement": new_job.experience_requirement,
+        "languages": new_job.languages,
         "description": new_job.description,
         "skills": new_job.skills
     }
@@ -67,6 +76,9 @@ def get_all_jobs(db: Session = Depends(get_db)):
             "workplace": job.workplace,
             "location": job.location,
             "employment_type": job.employment_type,
+            "education_requirement": job.education_requirement,
+            "experience_requirement": job.experience_requirement,
+            "languages": job.languages,
             "description": job.description,
             "skills": job.skills
         }
@@ -88,6 +100,9 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
         "workplace": job.workplace,
         "location": job.location,
         "employment_type": job.employment_type,
+        "education_requirement": job.education_requirement,
+        "experience_requirement": job.experience_requirement,
+        "languages": job.languages,
         "description": job.description,
         "skills": job.skills
     }

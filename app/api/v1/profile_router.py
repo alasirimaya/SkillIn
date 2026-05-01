@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
+from fastapi import Query
 from database import get_db
 from models import User, Skill, UserSkill
 from app.api.v1.embedding_service import save_user_embedding
@@ -20,6 +20,7 @@ class ProfileSaveRequest(BaseModel):
     skills: list[str] = []
     languages: list[str] = []
     location: str = ""
+    job_type: str = ""
 
 
 @router.post("/save")
@@ -38,9 +39,10 @@ def save_profile(
     user.education = payload.education
     user.education_level = payload.education_level
     user.years_of_experience = payload.years_of_experience
-    user.languages = ", ".join(payload.languages)
-    user.location = payload.location
-
+    user.languages = ", ".join(payload.languages) if payload.languages else ""
+    user.location = payload.location or ""
+    user.job_type = payload.job_type or ""
+    user.skill = ", ".join(payload.skills) if payload.skills else ""
     db.query(UserSkill).filter(UserSkill.user_id == payload.user_id).delete()
 
     for skill_name in payload.skills:
@@ -68,3 +70,26 @@ def save_profile(
         "msg": "Profile saved successfully",
         "user_id": payload.user_id,
     }
+
+
+@router.get("/search")
+def search_users(
+    job_type: str = Query(None),
+    skill: str = Query(None),
+    location: str = Query(None),
+    db: Session = Depends(get_db),
+):
+    query = db.query(User)
+
+    if job_type:
+        query = query.filter(User.job_type.ilike(f"%{job_type}%"))
+
+    if location:
+        query = query.filter(User.location.ilike(f"%{location}%"))
+
+    if skill:
+        query = query.filter(User.skill.isnot(None))
+        query = query.filter(User.skill.ilike(f"%{skill}%"))
+
+    return query.all()
+

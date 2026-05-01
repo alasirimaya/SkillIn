@@ -49,6 +49,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _certificatesController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
+  final TextEditingController jobTypeController = TextEditingController();
 
   @override
   void initState() {
@@ -149,6 +150,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           "languages": languagesList,
           "certificates": certificatesList,
           "location": locationText,
+          "job_type": jobTypeController.text,
         },
       );
 
@@ -182,6 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _certificatesController.dispose();
     _cityController.dispose();
     _countryController.dispose();
+    jobTypeController.dispose();
     super.dispose();
   }
 
@@ -496,6 +499,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   hint: "Enter your country",
                 ),
               ),
+              _buildSectionCard(
+
+  icon: Icons.work_outline,
+
+  title: "Job Type",
+
+  child: _buildTextField(
+
+    controller: jobTypeController,
+
+    hint: "Example: Part-Time, Full-Time",
+
+  ),
+
+),
             ],
           ),
         ),

@@ -23,66 +23,100 @@ class _HrNavigationScreenState extends State<HrNavigationScreen> {
   Future<void> _openAddJob() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AddJobScreen(),
+      MaterialPageRoute(builder: (_) => const AddJobScreen()),
+    );
+    setState(() {});
+  }
+
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    const darkBlue = Color(0xFF0F1F57);
+    const activeBg = Color(0xFFEAF0FF);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          decoration: BoxDecoration(
+            color: selected ? activeBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 24,
+                color: selected ? darkBlue : darkBlue.withOpacity(0.55),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: selected ? darkBlue : darkBlue.withOpacity(0.55),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
-
-    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: screens[currentIndex],
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF0F1F57),
-        onPressed: _openAddJob,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        child: SizedBox(
-          height: 68,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          height: 84,
+          margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x220F1F57),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              IconButton(
-                onPressed: () => setState(() => currentIndex = 0),
-                icon: Icon(
-                  Icons.home_outlined,
-                  color: currentIndex == 0
-                      ? const Color(0xFF3866FA)
-                      : Colors.grey,
-                ),
+              _navItem(
+                icon: Icons.home_outlined,
+                label: "Home",
+                selected: currentIndex == 0,
+                onTap: () => setState(() => currentIndex = 0),
               ),
-              IconButton(
-                onPressed: () => setState(() => currentIndex = 1),
-                icon: Icon(
-                  Icons.work_outline,
-                  color: currentIndex == 1
-                      ? const Color(0xFF3866FA)
-                      : Colors.grey,
-                ),
+              _navItem(
+                icon: Icons.work_outline,
+                label: "Jobs",
+                selected: currentIndex == 1,
+                onTap: () => setState(() => currentIndex = 1),
               ),
-              const SizedBox(width: 40),
-              IconButton(
-                onPressed: () => setState(() => currentIndex = 2),
-                icon: Icon(
-                  Icons.person_outline,
-                  color: currentIndex == 2
-                      ? const Color(0xFF3866FA)
-                      : Colors.grey,
-                ),
+              _navItem(
+                icon: Icons.add_circle_outline,
+                label: "Post",
+                selected: false,
+                onTap: _openAddJob,
               ),
-              IconButton(
-                onPressed: _openAddJob,
-                icon: const Icon(
-                  Icons.add_business_outlined,
-                  color: Colors.grey,
-                ),
+              _navItem(
+                icon: Icons.person_outline,
+                label: "Profile",
+                selected: currentIndex == 2,
+                onTap: () => setState(() => currentIndex = 2),
               ),
             ],
           ),

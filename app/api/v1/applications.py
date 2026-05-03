@@ -10,6 +10,39 @@ router = APIRouter(
 )
 
 
+def build_user_profile(user: User | None):
+    if not user:
+        return {
+            "applicant_name": "Unknown User",
+            "applicant_email": "No Email",
+            "about": "",
+            "experience": "",
+            "education": "",
+            "education_level": "",
+            "years_of_experience": "",
+            "skills": "",
+            "languages": "",
+            "location": "",
+            "job_type": "",
+            "specialization": "",
+        }
+
+    return {
+        "applicant_name": user.full_name or "Unknown User",
+        "applicant_email": user.email or "No Email",
+        "about": getattr(user, "about", "") or "",
+        "experience": getattr(user, "experience", "") or "",
+        "education": getattr(user, "education", "") or "",
+        "education_level": getattr(user, "education_level", "") or "",
+        "years_of_experience": getattr(user, "years_of_experience", "") or "",
+        "skills": getattr(user, "skill", "") or "",
+        "languages": getattr(user, "languages", "") or "",
+        "location": getattr(user, "location", "") or "",
+        "job_type": getattr(user, "job_type", "") or "",
+        "specialization": getattr(user, "specialization", "") or "",
+    }
+
+
 @router.post("/apply")
 async def apply_job(
     job_id: int = Form(...),
@@ -72,19 +105,19 @@ def get_all_applications(db: Session = Depends(get_db)):
     for app in applications:
         job = db.query(Job).filter(Job.id == app.job_id).first()
         user = db.query(User).filter(User.id == app.user_id).first()
+        profile = build_user_profile(user)
 
         results.append({
             "id": app.id,
             "job_id": app.job_id,
             "user_id": app.user_id,
-            "applicant_name": user.full_name if user else "Unknown User",
-            "applicant_email": user.email if user else "No Email",
             "job_title": job.title if job else "Unknown Job",
             "company": job.company if job else "Unknown Company",
             "status": app.status,
-            "info": app.info,
-            "cv_filename": app.cv_filename,
+            "info": app.info or "",
+            "cv_filename": app.cv_filename or "",
             "created_at": str(app.created_at),
+            **profile,
         })
 
     return results
@@ -108,8 +141,8 @@ def get_user_applications(user_id: int, db: Session = Depends(get_db)):
             "job_title": job.title if job else "Unknown Job",
             "company": job.company if job else "Unknown Company",
             "status": app.status,
-            "info": app.info,
-            "cv_filename": app.cv_filename,
+            "info": app.info or "",
+            "cv_filename": app.cv_filename or "",
             "created_at": str(app.created_at),
         })
 
@@ -127,19 +160,19 @@ def get_job_applications(job_id: int, db: Session = Depends(get_db)):
     for app in applications:
         job = db.query(Job).filter(Job.id == app.job_id).first()
         user = db.query(User).filter(User.id == app.user_id).first()
+        profile = build_user_profile(user)
 
         results.append({
             "id": app.id,
             "user_id": app.user_id,
             "job_id": app.job_id,
-            "applicant_name": user.full_name if user else "Unknown User",
-            "applicant_email": user.email if user else "No Email",
             "job_title": job.title if job else "Unknown Job",
             "company": job.company if job else "Unknown Company",
             "status": app.status,
-            "info": app.info,
-            "cv_filename": app.cv_filename,
+            "info": app.info or "",
+            "cv_filename": app.cv_filename or "",
             "created_at": str(app.created_at),
+            **profile,
         })
 
     return results
